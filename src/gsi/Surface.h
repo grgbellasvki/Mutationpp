@@ -112,6 +112,42 @@ public:
         << "nSurfaceReactions can be called only "
         << "when surface reactions can occur!";
     }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual int nPyrolysingSolids() const {
+        throw LogicError()
+        << "nPyrolysingSolids can be called only "
+        << "when bulk chemistry is considered!";
+    }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual void setPyrolysingSolidDensities(
+        const Eigen::VectorXd& v_rho_pyro_solid) {
+        throw LogicError()
+            << "setPyrolysingSolidDensities can be called only "
+            << "when bulk chemistry is considered!";
+    }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual void surfaceReactionRatesGasAndSolid(
+        Eigen::VectorXd& v_surface_reac_rates_gas_solid) {
+        throw LogicError()
+            << "surfaceReactionRatesGasAndSolid can be called only "
+            << "when bulk chemistry is considered!";
+    }
+
 //==============================================================================
 
     /**

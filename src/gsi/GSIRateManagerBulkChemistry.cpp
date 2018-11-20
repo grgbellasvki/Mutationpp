@@ -1,8 +1,7 @@
 /**
- * @file GSIRateManagerGamma.cpp
+ * @file GSIRateBulkChemistry.cpp
  *
- * @brief Class which computes the chemical production rate for each species
- *        based on tha gamma model for catalysis and ablation.
+ * @brief
  */
 
 /*
@@ -34,45 +33,75 @@
 #include "GSIRateLaw.h"
 #include "GSIRateManager.h"
 #include "GSIStoichiometryManager.h"
-#include "SurfaceProperties.h"
+#include "SolidProperties.h"
 #include "SurfaceState.h"
 
 using namespace Eigen;
 
 using namespace Mutation::Utilities::Config;
+using namespace Mutation::Thermodynamics;
 
 namespace Mutation {
     namespace GasSurfaceInteraction {
 
 //=============================================================================
 
-class GSIRateManagerGamma : public GSIRateManager
+class GSIRateManagerBulkChemistry : public GSIRateManager
 {
 public:
-    GSIRateManagerGamma(DataGSIRateManager args)
+    GSIRateManagerBulkChemistry(DataGSIRateManager args)
         : GSIRateManager(args),
 		  m_ns(args.s_thermo.nSpecies()),
 		  m_nr(args.s_reactions.size()),
+          mv_work(m_ns),
+          mv_chem_rate(m_ns),
           mv_react_rate_const(m_nr),
-		  mv_work(m_ns)
+          mv_r_to_ps(m_nr),
+          mv_r_to_pg(m_nr)
     {
-        for (int i_reac = 0; i_reac < m_nr; ++i_reac) {
-            m_reactants.addReaction(
-                i_reac, args.s_reactions[i_reac]->getReactants());
-            m_irr_products.addReaction(
-                i_reac, args.s_reactions[i_reac]->getProducts());
+        for (int i_r = 0; i_r < m_nr; ++i_r) {
+            int pos_pg = args.s_reactions[i_r]->getProducts().size()-1;
+            int pos_ps = 0;
+            // Ensure that the pyro gas is in the last position
+            mv_r_to_pg[i_r] = args.s_reactions[i_r]->getProducts()[pos_pg];
+            mv_r_to_ps[i_r] = args.s_reactions[i_r]->getReactants()[pos_ps];
+            // Here add the intermediate solid products!
         }
     }
 
 //=============================================================================
 
-    ~GSIRateManagerGamma(){}
+    ~GSIRateManagerBulkChemistry(){}
 
 //=============================================================================
 
     Eigen::VectorXd computeRates()
     {
+        mv_chem_rate.setZero();
+        double Tsurf = m_surf_state.getSurfaceT()(0);
+        double Psurf = m_thermo.P();
+
         // Get reaction rate constant
+        double react_rate_const;
+        for (int i_r = 0; i_r < m_nr; ++i_r) {
+            react_rate_const =
+                v_reactions[i_r]->getRateLaw()->
+                    forwardReactionRateCoefficient(
+                        m_surf_state.getSurfaceRhoi(),
+                        m_surf_state.getSurfaceT());
+
+            m_surf_state.solidProps().getPyrolysingGasEquilMassFrac(
+                mv_r_to_pg[i_r], Psurf, Tsurf, mv_work);
+
+            mv_chem_rate -= react_rate_const * mv_work;
+        }
+        return mv_chem_rate;
+    }
+
+//=============================================================================
+
+    Eigen::VectorXd computeRatesPerReaction()
+    {
         for (int i_r = 0; i_r < m_nr; ++i_r) {
             mv_react_rate_const(i_r) =
                 v_reactions[i_r]->getRateLaw()->
@@ -80,37 +109,32 @@ public:
                         m_surf_state.getSurfaceRhoi(),
                         m_surf_state.getSurfaceT());
         }
-
-        // Constant rate times densities of species
-        mv_work.setZero();
-        m_reactants.incrSpecies(mv_react_rate_const, mv_work);
-        m_irr_products.decrSpecies(mv_react_rate_const, mv_work);
-
-        // Multiply by molar mass
-        return mv_work.cwiseProduct(m_thermo.speciesMw().matrix());
+        return -mv_react_rate_const;
     }
 
 //=============================================================================
 
-    Eigen::VectorXd computeRatesPerReaction()
+    void computeRatesGasAndSolid(VectorXd& v_chem_rate_per_gas_and_solid)
     {
-    	// Getting the kfs with the initial conditions
+        v_chem_rate_per_gas_and_solid.setZero();
+        double Tsurf = m_surf_state.getSurfaceT()(0);
+        double Psurf = m_thermo.P();
+
+        // Get reaction rate constant
+        double reac_rate_const;
         for (int i_r = 0; i_r < m_nr; ++i_r) {
-            mv_react_rate_const(i_r) =
-                v_reactions[i_r]->getRateLaw()->forwardReactionRateCoefficient(
-            		m_surf_state.getSurfaceRhoi(), m_surf_state.getSurfaceT());
+            reac_rate_const =
+                v_reactions[i_r]->getRateLaw()->
+                    forwardReactionRateCoefficient(
+                        m_surf_state.getSurfaceRhoi(),
+                        m_surf_state.getSurfaceT());
+
+            m_surf_state.solidProps().getPyrolysingGasEquilMassFrac(
+                mv_r_to_pg[i_r], Psurf, Tsurf, mv_work);
+
+            v_chem_rate_per_gas_and_solid.head(m_ns) -= reac_rate_const * mv_work;
+            v_chem_rate_per_gas_and_solid(mv_r_to_ps[i_r]) += reac_rate_const;
         }
-        m_reactants.multReactions(
-            m_surf_state.getSurfaceRhoi(), mv_react_rate_const);
-
-        return mv_react_rate_const;
-    }
-
-//=============================================================================
-
-    void computeRatesGasAndSolid(Eigen::VectorXd& v_wrk)
-    {
-        // v_wrk.setZero();
     }
 
 //=============================================================================
@@ -121,19 +145,19 @@ public:
 private:
     const size_t m_ns;
     const size_t m_nr;
+    std::vector<int> mv_r_to_pg;
+    std::vector<int> mv_r_to_ps;
 
-    Eigen::VectorXd mv_react_rate_const;
+
     Eigen::VectorXd mv_work;
+    Eigen::VectorXd mv_chem_rate;
+    Eigen::VectorXd mv_react_rate_const;
 
     GSIStoichiometryManager m_reactants;
-    GSIStoichiometryManager m_irr_products;
 };
 
-ObjectProvider<GSIRateManagerGamma, GSIRateManager>
-    gsi_rate_manager_gamma("gamma");
-
-ObjectProvider<GSIRateManagerGamma, GSIRateManager>
-    gsi_rate_manager_gamma_energy("gamma_energy");
+ObjectProvider<GSIRateManagerBulkChemistry, GSIRateManager>
+    gsi_rate_manager_bulk_chemistry("bulk_chemistry");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

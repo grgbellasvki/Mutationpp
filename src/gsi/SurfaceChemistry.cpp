@@ -104,6 +104,14 @@ void SurfaceChemistry::surfaceReactionRatesPerReaction(
 
 //==============================================================================
 
+void SurfaceChemistry::surfaceReactionRatesGasAndSolid(
+    Eigen::VectorXd& v_rate_gas_solid)
+{
+    mp_rate_manager->computeRatesGasAndSolid(v_rate_gas_solid);
+}
+
+//==============================================================================
+
 int SurfaceChemistry::nSurfaceReactions() {
     return mp_rate_manager->nSurfaceReactions();
 }

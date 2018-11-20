@@ -1,7 +1,7 @@
 /**
- * @file GSIReactionCatalysis.cpp
+ * @file GSIReactionPyrolysis.cpp
  *
- * @brief Implements a surface reaction of catalysis type.
+ * @brief
  */
 
 /*
@@ -32,6 +32,7 @@
 
 #include "GSIRateLaw.h"
 #include "GSIReaction.h"
+#include "SolidProperties.h"
 #include "SurfaceState.h"
 
 using namespace std;
@@ -40,10 +41,10 @@ using namespace Mutation::Utilities::Config;
 namespace Mutation {
     namespace GasSurfaceInteraction {
 
-class GSIReactionCatalysis : public GSIReaction
+class GSIReactionPyrolysis : public GSIReaction
 {
 public:
-    GSIReactionCatalysis(ARGS args)
+    GSIReactionPyrolysis(ARGS args)
         : GSIReaction(args)
     {
         assert(args.s_iter_reaction->tag() == "reaction");
@@ -60,12 +61,13 @@ public:
         const Mutation::Utilities::IO::XmlElement& node_rate_law =
             *(args.s_iter_reaction->begin());
 
-        DataGSIRateLaw data_gsi_rate_law = { args.s_thermo,
-                                             args.s_transport,
-                                             node_rate_law,
-                                             args.s_surf_state,
-                                             m_reactants,
-                                             m_products };
+        DataGSIRateLaw data_gsi_rate_law = {
+            args.s_thermo,
+            args.s_transport,
+            node_rate_law,
+            args.s_surf_state,
+            m_reactants,
+            m_products };
 
         mp_rate_law = Factory<GSIRateLaw>::create(
             node_rate_law.tag(), data_gsi_rate_law);
@@ -75,18 +77,38 @@ public:
                 "A rate law must be provided for this reaction!");
         }
 
-         // Check for charge and mass conservation
-        const size_t ne = args.s_thermo.nElements();
+        // Check for charge and mass conservation
+/*        const size_t ne = args.s_thermo.nElements();
         vector<int> v_sums(ne);
         std::fill(v_sums.begin(), v_sums.end(), 0);
-        for (int ir = 0; ir < m_reactants.size(); ++ir)
+        // Reactants
+        for (int ir = 0; ir < m_reactants.size(); ++ir) {
             for (int kr = 0; kr < ne; ++kr)
                 v_sums[kr] +=
-                    args.s_thermo.elementMatrix()(m_reactants[ir],kr);
+                    args.s_thermo.elementMatrix()(m_reactants[ir], kr);
+        }
+        // Reactants in the surface phase
+        for (int ir = 0; ir < m_reactants_surf.size(); ++ir){
+            for (int kr = 0; kr < ne; ++kr) {
+                v_sums[kr] += args.s_thermo.elementMatrix()(
+                    args.s_surf_state.surfaceProps().surfaceToGasIndex(
+                        m_reactants_surf[ir]), kr);
+            }
+        }
+        // Products
         for (int ip = 0; ip < m_products.size(); ++ip)
             for (int kp = 0; kp < ne; ++kp)
                 v_sums[kp] -=
-                    args.s_thermo.elementMatrix()(m_products[ip],kp);
+                    args.s_thermo.elementMatrix()(m_products[ip], kp);
+        // Products in the surface phase
+        for (int ip = 0; ip < m_products_surf.size(); ++ip){
+            for (int kp = 0; kp < ne; ++kp) {
+                v_sums[kp] -= args.s_thermo.elementMatrix()(
+                    args.s_surf_state.surfaceProps().surfaceToGasIndex(
+                        m_products_surf[ip]), kp);
+            }
+        }
+
         for (int i = 0; i < ne; ++i)
             m_conserves &= (v_sums[i] == 0);
 
@@ -94,21 +116,24 @@ public:
                 throw InvalidInputError("formula", m_formula)
                     << "Reaction " << m_formula
                     << " does not conserve charge or mass.";
+*/
     }
 
 //==============================================================================
-    ~GSIReactionCatalysis(){
+
+    ~GSIReactionPyrolysis(){
         if (mp_rate_law != NULL){ delete mp_rate_law; }
     }
 
 //==============================================================================
+
     void parseSpecies(
         std::vector<int>& species, std::vector<int>& species_surf,
         std::string& str_chem_species,
         const Mutation::Utilities::IO::XmlElement& node_reaction,
         const Mutation::Thermodynamics::Thermodynamics& thermo,
-        const SurfaceState& surf_state)
-    {
+        const SurfaceState& surf_state){
+
         // State-Machine states for parsing a species formula
         enum ParseState {
             coefficient,
@@ -150,7 +175,6 @@ public:
                     }
                     break;
             }
-
             if (c == str_chem_species.size() - 1) {
                 add_species = true;
                 e = c;
@@ -158,28 +182,34 @@ public:
 
             int index;
             if (add_species) {
-                index = thermo.speciesIndex(
-                            str_chem_species.substr(s, e-s+1));
+                index = surf_state.solidProps().pyrolysisSpeciesIndex(
+                    str_chem_species.substr(s, e-s+1));
 
-                if(index == -1){
+                if(index == -1) {
                     node_reaction.parseError((
                         "Species " + str_chem_species.substr(s, e-s+1)
-                        + " is not in the mixture list or a species in the "
-                          "wall phase!").c_str());
+                        + " is not in the mixture list or a species of the "
+                          "solid!" ).c_str());
                 }
 
-                species.push_back(index);
+                for (int i_nu = 0; i_nu < nu; i_nu++)
+                    species.push_back(index);
+
                 add_species = false;
             }
+
+            // Move on the next character
             c++;
         }
+
+        // Sort the species vector
         std::sort(species.begin(), species.end());
     }
 };
 
 ObjectProvider<
-    GSIReactionCatalysis, GSIReaction>
-    catalysis_reaction("catalysis");
+    GSIReactionPyrolysis, GSIReaction>
+    reaction_pyrolysis("pyrolysis");
 
     } // namespace GasSurfaceInteraction
 }  // namespace Mutation

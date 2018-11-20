@@ -31,6 +31,7 @@
 
 #include <eigen3/Eigen/Dense>
 
+namespace Mutation { namespace Thermodynamics { class Thermodynamics; }}
 namespace Mutation { namespace Utilities { namespace IO { class XmlElement; }}}
 
 namespace Mutation {
@@ -41,6 +42,7 @@ namespace Mutation {
  */
 struct DataSolidProperties
 {
+    const Mutation::Thermodynamics::Thermodynamics& s_thermo;
     const Mutation::Utilities::IO::XmlElement& s_node_solid_props;
 };
 
@@ -81,6 +83,7 @@ public:
      * between the virgin material density and the surface density minus 1.
      */
     virtual double getPhiRatio() const { return 1.; }
+
 //==============================================================================
 
     /**
@@ -88,6 +91,71 @@ public:
      * equal to the one set in the gsi input file.
      */
     virtual double getEnthalpyVirginMaterial() const { return 0.; }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual int pyrolysisSpeciesIndex(const std::string& str_sp) const {
+        return -1;
+    }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual int nPyrolysingSolids() const {
+        return 0;
+    }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual void setPyrolysingSolidDensities(
+        const Eigen::VectorXd& v_rho_pyro_solid) const {}
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual double getPyrolysingSolidDensity(const int& sp) const {
+        return 0.;
+    }
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual double getPyrolysingSolidInitialDensity(const int& sp) const {
+        return 0.;
+    }
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual double getPyrolysingSolidFinalDensity(const int& sp) const {
+        return 0.;
+    }
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual int nPyrolysingGases() const { return 0.; }
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual void getPyrolysingGasEquilMassFrac(
+        const int& sp, const double& P, const double& T, Eigen::VectorXd& v_yi) const
+        {}
+
 };
 
     } // namespace GasSurfaceInteraction

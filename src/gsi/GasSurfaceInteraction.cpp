@@ -89,15 +89,21 @@ GasSurfaceInteraction::GasSurfaceInteraction(
     if (xml_pos_surf_feats != root_element.end())
         xml_pos_surf_feats->getAttribute("solid_conduction", solid_model);
 
+    XmlElement::const_iterator xml_pos_solid_props;
     if (solid_model == "steady_state") {
-        XmlElement::const_iterator xml_pos_solid_props =
-            root_element.findTag("solid_properties");
+        xml_pos_solid_props = root_element.findTag("solid_properties");
         if (xml_pos_solid_props == root_element.end())
             errorSolidPropertiesNotProvided(solid_model);
+    } else if (m_gsi_mechanism == "bulk_chemistry") {
+        xml_pos_solid_props = root_element.findTag("solid_properties");
+        if (xml_pos_solid_props == root_element.end())
+            errorSolidPropertiesNotProvided(solid_model);
+        solid_model = "bulk_chemistry";
     } else {
         solid_model = "none";
     }
-    DataSolidProperties data_solid_props = { *xml_pos_surf_props };
+    DataSolidProperties data_solid_props = {
+        m_thermo, *xml_pos_solid_props };
     mp_surf_state->setSolidProperties(solid_model, data_solid_props);
 
     // Creating the Surface class
@@ -168,6 +174,36 @@ void GasSurfaceInteraction::surfaceReactionRatesPerReaction(
 int GasSurfaceInteraction::nSurfaceReactions()
 {
     return mp_surf->nSurfaceReactions();
+}
+
+//==============================================================================
+
+int GasSurfaceInteraction::nPyrolysingSolids()
+{
+    return mp_surf->nPyrolysingSolids();
+}
+
+//==============================================================================
+
+void GasSurfaceInteraction::setPyrolysingSolidDensities(
+    const double* const p_rho_pyro_solid)
+{
+    mp_surf->setPyrolysingSolidDensities(Map<const VectorXd>(
+        p_rho_pyro_solid, nPyrolysingSolids()));
+}
+
+//==============================================================================
+
+void GasSurfaceInteraction::surfaceReactionRatesGasAndSolid(
+    double* const p_surface_reac_rates_gas_solid)
+{
+    Eigen::VectorXd v_surf_rates_per_reac(
+        m_thermo.nSpecies() + nPyrolysingSolids());
+    mp_surf->surfaceReactionRatesGasAndSolid(v_surf_rates_per_reac);
+
+    for (int i = 0; i < m_thermo.nSpecies() + nPyrolysingSolids(); i++){
+	    p_surface_reac_rates_gas_solid[i] = v_surf_rates_per_reac(i);
+	}
 }
 
 //==============================================================================

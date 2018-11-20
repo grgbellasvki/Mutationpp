@@ -27,17 +27,22 @@ add_sources(mutation++
     GasSurfaceInteraction.cpp
     GSIReactionAblation.cpp
     GSIReactionCatalysis.cpp
+    GSIReactionPyrolysis.cpp
     GSIRateLawGammaConst.cpp
     GSIRateLawGammaT.cpp
+    GSIRateLawPyrolysisGoldstein.cpp
     GSIRateLawSublimation.cpp
     GSIRateManagerGamma.cpp
+    GSIRateManagerBulkChemistry.cpp
     GSIStoichiometryManager.cpp
     MassBlowingRateAblation.cpp
     MassBlowingRateNull.cpp
     SolidPropertiesNull.cpp
     SolidPropertiesSteadyState.cpp
+    SolidPropertiesBulkChemistry.cpp
     SurfaceChemistry.cpp
     SurfaceRadiation.cpp
+    SurfaceBulkChemistry.cpp
     SurfaceBalanceSolverMass.cpp
     SurfaceBalanceSolverMassEnergy.cpp
     SurfacePropertiesNull.cpp

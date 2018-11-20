@@ -109,6 +109,12 @@ public:
 
 //==============================================================================
     /**
+     *
+     */
+    virtual void computeRatesGasAndSolid(Eigen::VectorXd& v_rates) = 0;
+
+//==============================================================================
+    /**
      * Purely virtual function which return the number of surface reactions.
      */
     virtual int nSurfaceReactions() = 0;

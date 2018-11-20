@@ -65,6 +65,7 @@ public:
         DataGSIRateLaw data_gsi_rate_law = { args.s_thermo,
                                              args.s_transport,
                                              node_rate_law,
+                                             args.s_surf_state,
                                              m_reactants,
                                              m_products };
 

@@ -80,6 +80,13 @@ public:
 
 //==============================================================================
     /**
+     *
+     */
+    void surfaceReactionRatesGasAndSolid(
+        Eigen::VectorXd& v_surf_reac_rates_gas_solid);
+
+//==============================================================================
+    /**
      * Returns the number of surface reactions considered.
      */
     int nSurfaceReactions();

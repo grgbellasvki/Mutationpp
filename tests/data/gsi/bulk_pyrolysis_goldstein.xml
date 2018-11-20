@@ -1,0 +1,21 @@
+<gsi gsi_mechanism = "bulk_chemistry">
+
+    <surface_properties type="none"/>
+
+    <solid_properties>
+        <pyro_solid label = "p" component = "A" init_dens ="1.1" final_dens ="0.3"/>
+        <pyro_solid label = "p" component = "B" init_dens ="2.3" final_dens ="0.5"/>
+        <pyro_gas label = "g" composition = "A" elem_comp = "N:0.21 O:0.79" />
+        <pyro_gas label = "g" composition = "B" elem_comp = "N:0.11 O:0.89" />
+    </solid_properties>
+
+    <surface_chemistry>
+        <reaction type="pyrolysis" formula="A-p => A-g">
+            <goldstein pre_exp = "1." T = "0." order = "1"/>
+        </reaction>
+
+        <reaction type="pyrolysis" formula="B-p => B-g">
+            <goldstein pre_exp = "1." T = "0." order = "1"/>
+        </reaction>
+    </surface_chemistry>
+</gsi>

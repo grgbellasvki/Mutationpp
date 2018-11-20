@@ -38,7 +38,7 @@ namespace Mutation { namespace Utilities { namespace IO { class XmlElement; }}}
 namespace Mutation {
     namespace GasSurfaceInteraction {
 
-class SurfaceProperties;
+class SurfaceState;
 
 //==============================================================================
 
@@ -51,6 +51,7 @@ struct DataGSIRateLaw
     Mutation::Thermodynamics::Thermodynamics& s_thermo;
     const Mutation::Transport::Transport& s_transport;
     const Mutation::Utilities::IO::XmlElement& s_node_rate_law;
+    const SurfaceState& s_surf_state;
     const std::vector<int>& s_reactants;
     const std::vector<int>& s_products;
 };
