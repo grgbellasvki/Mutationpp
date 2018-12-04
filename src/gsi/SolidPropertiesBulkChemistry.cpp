@@ -31,6 +31,7 @@
 
 #include "Composition.h"
 #include "SolidProperties.h"
+#include "SurfaceState.h"
 #include "Thermodynamics.h"
 
 using namespace Mutation::Thermodynamics;
@@ -71,7 +72,8 @@ public:
         const VectorXd& v_rho_pyro_solid) const {
         mv_rhops = v_rho_pyro_solid;
         for (int i = 0; i < m_n_ps; i++) {
-            if (mv_rhops(i) > mv_rhops_i(i) || mv_rhops(i) < mv_rhops_f(i) ) {
+            if (mv_rhops_i(i) > mv_rhops_f(i) &&
+                (mv_rhops(i) > mv_rhops_i(i) || mv_rhops(i) < mv_rhops_f(i))) {
                 std::cerr << "ERROR THE SET DENSITIES ARE WRONG." << std::endl;
                 exit(1);
             }
@@ -109,10 +111,22 @@ public:
     }
 
 //==============================================================================
+
+    void solidEffectiveThermalConductivity(VectorXd v_solid_lambda) const;
+
+//==============================================================================
+
+    void solidHeatCapacity(VectorXd v_solid_cp) const;
+
+
+//==============================================================================
 private:
     const Mutation::Thermodynamics::Thermodynamics& m_thermo;
+    const SurfaceState& m_surf_state;
 
     const int m_n_g;
+    const size_t pos_T_trans;
+    const double tol;
 
     int m_n_ps;
     std::vector<std::string> mv_ps; // bulk stores chemical symbol
@@ -123,6 +137,20 @@ private:
     int m_n_pg;
     std::vector<std::string> mv_pg; // gas stores chemical symbol
     std::vector<VectorXd> mv_pg_comp;
+
+    const size_t m_n_coeff;
+    mutable Eigen::VectorXd mv_temp;
+
+    bool is_isotropic;
+    Eigen::VectorXd v_cond_dx;
+    Eigen::VectorXd v_cond_dy;
+    Eigen::VectorXd v_cond_dz;
+    Eigen::VectorXd v_cond_fx;
+    Eigen::VectorXd v_cond_fy;
+    Eigen::VectorXd v_cond_fz;
+
+    Eigen::VectorXd v_cp_d;
+    Eigen::VectorXd v_cp_f;
 };
 
 ObjectProvider<
@@ -134,7 +162,12 @@ ObjectProvider<
 SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     : SolidProperties(args),
       m_thermo(args.s_thermo),
-      m_n_g(m_thermo.nSpecies())
+      m_surf_state(args.s_surf_state),
+      m_n_g(m_thermo.nSpecies()),
+      m_n_coeff(7),
+      mv_temp(m_n_coeff),
+      tol(1.e-6),
+      pos_T_trans(0)
 {
     assert(args.s_node_solid_props.tag() == "solid_properties");
 
@@ -143,48 +176,151 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     std::vector<double> v_dens_f;
 
     // Looping over all the children
-    for (XmlElement::const_iterator iter_phase =
+    for (XmlElement::const_iterator iter =
         args.s_node_solid_props.begin();
-        iter_phase != args.s_node_solid_props.end();
-        iter_phase++)
+        iter != args.s_node_solid_props.end();
+        iter++)
     {
-        std::string option = iter_phase->tag();
+        std::string option = iter->tag();
 
         std::string label;
         std::string symbol;
         double wrk;
 
-        if (option.compare("pyro_solid") == 0) {
-            iter_phase->getAttribute(
+        if (option.compare("effective_cond") == 0) {
+            iter->getAttribute("isotropic", is_isotropic,
+            "Isotropic property should be provided.");
+
+            for (XmlElement::const_iterator mat = iter->begin();
+                mat != iter->end();
+                mat++)
+            {
+                std::string material = mat->tag();
+
+                if (material.compare("decomposing") == 0) {
+
+                    XmlElement::const_iterator dir = mat->findTag("x");
+                    std::istringstream ssx(dir->text());
+
+                    std::copy(
+                        std::istream_iterator<double>(ssx),
+                        std::istream_iterator<double>(),
+                        v_cond_dx.data());
+
+                    if (is_isotropic){
+                        v_cond_dy = v_cond_dx;
+                        v_cond_dz = v_cond_dx;
+                    } else {
+                        dir = iter->findTag("y");
+                        std::istringstream ssy(dir->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssy),
+                            std::istream_iterator<double>(),
+                            v_cond_dy.data());
+
+                        dir = iter->findTag("z");
+                        std::istringstream ssz(dir->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssz),
+                            std::istream_iterator<double>(),
+                            v_cond_dz.data());
+                    }
+
+                } else if (material.compare("final") == 0) {
+                    XmlElement::const_iterator dir = mat->findTag("x");
+                    std::istringstream ssx(dir->text());
+
+                    std::copy(
+                        std::istream_iterator<double>(ssx),
+                        std::istream_iterator<double>(),
+                        v_cond_fx.data());
+
+                    if (is_isotropic){
+                        v_cond_fy = v_cond_fx;
+                        v_cond_fz = v_cond_fx;
+                    } else {
+                        dir = iter->findTag("y");
+                        std::istringstream ssy(dir->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssy),
+                            std::istream_iterator<double>(),
+                            v_cond_fy.data());
+
+                        dir = iter->findTag("z");
+                        std::istringstream ssz(dir->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssz),
+                            std::istream_iterator<double>(),
+                            v_cond_fz.data());
+                    }
+                } else {
+                    // "ERROR"
+                }
+
+                // Assert = max_coeff
+            }
+        } else if (option.compare("heat_capacity") == 0) {
+            for (XmlElement::const_iterator mat = iter->begin();
+                mat != iter->end();
+                mat++)
+            {
+                std::string material = mat->tag();
+
+                if (material.compare("decomposing") == 0) {
+                    std::istringstream ss(mat->text());
+
+                    std::copy(
+                        std::istream_iterator<double>(ss),
+                        std::istream_iterator<double>(),
+                        v_cp_d.data());
+                } else if (material.compare("final") == 0) {
+                    std::istringstream ss(mat->text());
+
+                    std::copy(
+                        std::istream_iterator<double>(ss),
+                        std::istream_iterator<double>(),
+                        v_cp_f.data());
+                } else {
+                    // "ERROR"
+                }
+
+                // Assert max_coeff
+            }
+        } else if (option.compare("pyro_solid") == 0) {
+            iter->getAttribute(
                 "label", label,
                 "Error in surface_composition for the "
                 "surface properties. A label should be provided.");
 
-            iter_phase->getAttribute(
+            iter->getAttribute(
                 "component", symbol,
                 "Error in SolidPropertiesBulkChemistry species");
 
             mv_ps.push_back(symbol + '-' + label);
 
-            iter_phase->getAttribute(
+            iter->getAttribute(
                 "init_dens", wrk,
                 "Error in solid_composition for the "
                 "surface properties. An initial density should be provided.");
             v_dens_i.push_back(wrk);
 
-            iter_phase->getAttribute(
+            iter->getAttribute(
                 "final_dens", wrk,
                 "Error in solid_composition for the "
                 "solid properties. A final density should be provided.");
             v_dens_f.push_back(wrk);
 
         } else if (option.compare("pyro_gas") == 0) {
-            iter_phase->getAttribute(
+            iter->getAttribute(
                  "label", label,
                 "Error in solid_composition for the "
                 "solid properties. A label should be provided.");
 
-            iter_phase->getAttribute(
+            iter->getAttribute(
                 "composition", symbol,
                 "Error in SolidProperties, composition");
 
@@ -192,7 +328,7 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
             mv_pg.push_back(symbol);
 
             std::string elem;
-            iter_phase->getAttribute(
+            iter->getAttribute(
                 "elem_comp", elem,
                 "Error in SolidPropertiesBulkChemistry, elemental composition");
 
@@ -279,6 +415,47 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
         return 0.;
     }
 
+//==============================================================================
+
+    void SolidPropertiesBulkChemistry::solidEffectiveThermalConductivity(
+        VectorXd v_solid_lambda) const
+    {
+        double Tsolid1 = m_surf_state.getSurfaceT()(pos_T_trans);
+        double Tsolid2 = Tsolid1  * Tsolid1;
+        double Tsolid3 = Tsolid2 * Tsolid1;
+        double Tsolid4 = Tsolid3 * Tsolid1;
+        double Tsolidm1 = 1.       / Tsolid1;
+        double Tsolidm2 = Tsolidm1 / Tsolid1;
+
+        mv_temp(0) = Tsolid4;
+        mv_temp(1) = Tsolid3;
+        mv_temp(2) = Tsolid2;
+        mv_temp(3) = Tsolid1;
+        mv_temp(4) = 1.;
+        mv_temp(5) = Tsolidm1;
+        mv_temp(6) = Tsolidm2;
+
+        if ( ((mv_rhops_f-mv_rhops).cwiseAbs()).maxCoeff() < tol ) {
+                v_solid_lambda(0) = mv_temp.dot(v_cond_fx);
+                v_solid_lambda(1) = mv_temp.dot(v_cond_fy);
+                v_solid_lambda(2) = mv_temp.dot(v_cond_fz);
+        } else {
+                v_solid_lambda(0) = mv_temp.dot(v_cond_dx);
+                v_solid_lambda(1) = mv_temp.dot(v_cond_dy);
+                v_solid_lambda(2) = mv_temp.dot(v_cond_dz);
+        }
+    }
+
+//==============================================================================
+
+    void SolidPropertiesBulkChemistry::solidHeatCapacity(
+        VectorXd v_solid_cp) const
+        {
+
+            //v_solid_cp = 
+        }
+
+//==============================================================================
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

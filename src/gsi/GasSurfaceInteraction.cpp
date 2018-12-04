@@ -103,7 +103,7 @@ GasSurfaceInteraction::GasSurfaceInteraction(
         solid_model = "none";
     }
     DataSolidProperties data_solid_props = {
-        m_thermo, *xml_pos_solid_props };
+        m_thermo, *mp_surf_state, *xml_pos_solid_props };
     mp_surf_state->setSolidProperties(solid_model, data_solid_props);
 
     // Creating the Surface class

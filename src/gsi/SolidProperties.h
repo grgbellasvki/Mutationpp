@@ -37,12 +37,15 @@ namespace Mutation { namespace Utilities { namespace IO { class XmlElement; }}}
 namespace Mutation {
     namespace GasSurfaceInteraction {
 
+class SurfaceState;
+
 /**
  * Structure which stores the necessary inputs for the SolidProperties class.
  */
 struct DataSolidProperties
 {
     const Mutation::Thermodynamics::Thermodynamics& s_thermo;
+    const SurfaceState& s_surf_state;
     const Mutation::Utilities::IO::XmlElement& s_node_solid_props;
 };
 
