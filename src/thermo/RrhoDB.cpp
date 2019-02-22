@@ -110,7 +110,7 @@ public:
           m_use_tables(true),
           m_last_bfacs_T(0.0)
     { }
-    
+
     /**
      * Destructor.
      */

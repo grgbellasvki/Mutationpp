@@ -78,7 +78,7 @@ public:
     {
         double rho_s =
             m_surf_state.solidProps().getPyrolysingSolidDensity(pos_rho_s);
-        double frac = pow((rho_s-m_rho_i) / m_rho_i, m_ord);
+        double frac = pow((rho_s-m_rho_f) / m_rho_i, m_ord);
 
         return -m_pre_exp * m_rho_i * exp(
             -m_T_act / v_Tsurf(pos_T_trans)) * frac;

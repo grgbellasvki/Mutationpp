@@ -151,6 +151,30 @@ public:
 //==============================================================================
 
     /**
+     *
+     */
+    virtual void solidEffectiveThermalConductivity(
+        Eigen::VectorXd& v_solid_lambda) {
+        throw LogicError()
+            << "solidEffectiveThermalConductivity can be called only "
+            << "when bulk chemistry is considered!";
+    }
+
+//==============================================================================
+
+    /**
+     *
+     */
+    virtual void solidHeatCapacity(
+        double& v_solid_cp) {
+        throw LogicError()
+            << "solidHeatCapacity can be called only "
+            << "when bulk chemistry is considered!";
+    }
+
+//==============================================================================
+
+    /**
      * Function which set ups the diffusion model in order to compute
      * the gradient of mole fractions. Requires as input a mole fraction
      * vector for the chemical state of the gas near the surface and a distance

@@ -1,4 +1,4 @@
-<gsi gsi_mechanism = "bulk_chemistry">
+<gsi gsi_mechanism = "bulk">
 
     <surface_properties type="none"/>
 
@@ -11,11 +11,11 @@
 
     <surface_chemistry>
         <reaction type="pyrolysis" formula="A-p => A-g">
-            <goldstein pre_exp = "1." T = "0." order = "1"/>
+            <goldstein pre_exp = "1." T = "500." order = "1"/>
         </reaction>
 
         <reaction type="pyrolysis" formula="B-p => B-g">
-            <goldstein pre_exp = "1." T = "0." order = "1"/>
+            <goldstein pre_exp = "2." T = "1200" order = "2"/>
         </reaction>
     </surface_chemistry>
 </gsi>

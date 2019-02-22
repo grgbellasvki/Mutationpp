@@ -136,6 +136,18 @@ public:
         double* const p_surface_reac_rates_gas_solid);
 
     /**
+     *
+     */
+    void solidEffectiveThermalConductivity(
+        double* const p_solid_lambda);
+
+    /**
+     *
+     */
+    void solidHeatCapacity(
+        double* const p_solid_cp);
+
+    /**
      * Function which set ups the diffusion model in order to compute
      * the gradient of mole fractions. Requires as input a mole fraction
      * pointer for the chemical state of the gas near the surface and a distance

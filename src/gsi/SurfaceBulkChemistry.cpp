@@ -108,8 +108,7 @@ public:
 
 //=============================================================================
 
-    int nSurfaceReactions()
-    {
+    int nSurfaceReactions() {
         if (mp_surf_chem != NULL)
             return mp_surf_chem->nSurfaceReactions();
 
@@ -120,6 +119,13 @@ public:
 
     int nPyrolysingSolids() const {
         return m_surf_state.solidProps().nPyrolysingSolids();
+    }
+
+//=============================================================================
+
+    void setPyrolysingSolidDensities(const Eigen::VectorXd& v_rho_pyro_solid) {
+        m_surf_state.solidProps().setPyrolysingSolidDensities(
+            v_rho_pyro_solid);
     }
 
 //=============================================================================
@@ -136,9 +142,21 @@ public:
 
 //=============================================================================
 
-    void setPyrolysingSolidDensities(const Eigen::VectorXd& v_rho_pyro_solid) {
-        m_surf_state.solidProps().setPyrolysingSolidDensities(
-            v_rho_pyro_solid);
+    void solidEffectiveThermalConductivity(
+        Eigen::VectorXd& v_solid_lambda)
+    {
+        errorSurfaceStateNotSet();
+
+        m_surf_state.solidProps().solidEffectiveThermalConductivity(
+            v_solid_lambda);
+    }
+
+//=============================================================================
+
+    void solidHeatCapacity(double& solid_cp)
+    {
+        errorSurfaceStateNotSet();
+        m_surf_state.solidProps().solidHeatCapacity(solid_cp);
     }
 
 //=============================================================================
@@ -169,7 +187,7 @@ private:
 
 ObjectProvider<
     SurfaceBulkChemistry, Surface>
-    surface_bulk_chemistry("bulk_chemistry");
+    surface_bulk_chemistry("bulk");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

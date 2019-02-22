@@ -155,6 +155,25 @@ public:
     /**
      *
      */
+    virtual void solidEffectiveThermalConductivity(
+        Eigen::VectorXd& v_solid_lambda) const
+    {
+        v_solid_lambda.setConstant(0.);
+    }
+
+//==============================================================================
+    /**
+     *
+     */
+    virtual void solidHeatCapacity(double& solid_cp) const
+    {
+        solid_cp = 0.;
+    }
+
+//==============================================================================
+    /**
+     *
+     */
     virtual void getPyrolysingGasEquilMassFrac(
         const int& sp, const double& P, const double& T, Eigen::VectorXd& v_yi) const
         {}

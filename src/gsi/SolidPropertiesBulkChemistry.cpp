@@ -112,12 +112,11 @@ public:
 
 //==============================================================================
 
-    void solidEffectiveThermalConductivity(VectorXd v_solid_lambda) const;
+    void solidEffectiveThermalConductivity(VectorXd& v_solid_lambda) const;
 
 //==============================================================================
 
-    void solidHeatCapacity(VectorXd v_solid_cp) const;
-
+    void solidHeatCapacity(double& solid_cp) const;
 
 //==============================================================================
 private:
@@ -130,8 +129,8 @@ private:
 
     int m_n_ps;
     std::vector<std::string> mv_ps; // bulk stores chemical symbol
-    Eigen::VectorXd mv_rhops_i;
     mutable Eigen::VectorXd mv_rhops;
+    Eigen::VectorXd mv_rhops_i;
     Eigen::VectorXd mv_rhops_f;
 
     int m_n_pg;
@@ -142,20 +141,27 @@ private:
     mutable Eigen::VectorXd mv_temp;
 
     bool is_isotropic;
-    Eigen::VectorXd v_cond_dx;
-    Eigen::VectorXd v_cond_dy;
-    Eigen::VectorXd v_cond_dz;
-    Eigen::VectorXd v_cond_fx;
-    Eigen::VectorXd v_cond_fy;
-    Eigen::VectorXd v_cond_fz;
+    Eigen::VectorXd mv_cond_vx;
+    Eigen::VectorXd mv_cond_vy;
+    Eigen::VectorXd mv_cond_vz;
+    Eigen::VectorXd mv_cond_dx;
+    Eigen::VectorXd mv_cond_dy;
+    Eigen::VectorXd mv_cond_dz;
+    Eigen::VectorXd mv_cond_fx;
+    Eigen::VectorXd mv_cond_fy;
+    Eigen::VectorXd mv_cond_fz;
 
-    Eigen::VectorXd v_cp_d;
-    Eigen::VectorXd v_cp_f;
+    double T_ref_v;
+    Eigen::VectorXd mv_cp_v;
+    double T_ref_d;
+    Eigen::VectorXd mv_cp_d;
+    double T_ref_f;
+    Eigen::VectorXd mv_cp_f;
 };
 
 ObjectProvider<
     SolidPropertiesBulkChemistry, SolidProperties>
-    solid_properties_bulk_chemistry("bulk_chemistry");
+    solid_properties_bulk_chemistry("bulk");
 
 //==============================================================================
 
@@ -166,10 +172,36 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
       m_n_g(m_thermo.nSpecies()),
       m_n_coeff(7),
       mv_temp(m_n_coeff),
+      mv_cond_vx(m_n_coeff),
+      mv_cond_vy(m_n_coeff),
+      mv_cond_vz(m_n_coeff),
+      mv_cond_dx(m_n_coeff),
+      mv_cond_dy(m_n_coeff),
+      mv_cond_dz(m_n_coeff),
+      mv_cond_fx(m_n_coeff),
+      mv_cond_fy(m_n_coeff),
+      mv_cond_fz(m_n_coeff),
+      mv_cp_v(m_n_coeff),
+      mv_cp_d(m_n_coeff),
+      mv_cp_f(m_n_coeff),
       tol(1.e-6),
       pos_T_trans(0)
 {
     assert(args.s_node_solid_props.tag() == "solid_properties");
+
+    // Initializing Coefficients to zero
+    mv_cond_vx.setConstant(0.);
+    mv_cond_vy.setConstant(0.);
+    mv_cond_vz.setConstant(0.);
+    mv_cond_dx.setConstant(0.);
+    mv_cond_dy.setConstant(0.);
+    mv_cond_dz.setConstant(0.);
+    mv_cond_fx.setConstant(0.);
+    mv_cond_fy.setConstant(0.);
+    mv_cond_fz.setConstant(0.);
+    mv_cp_v.setConstant(0.);
+    mv_cp_d.setConstant(0.);
+    mv_cp_f.setConstant(0.);
 
     // Helper vectors
     std::vector<double> v_dens_i;
@@ -197,68 +229,103 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
             {
                 std::string material = mat->tag();
 
-                if (material.compare("decomposing") == 0) {
+                if (material.compare("virgin") == 0) {
+                    XmlElement::const_iterator dirx = mat->findTag("x");
 
-                    XmlElement::const_iterator dir = mat->findTag("x");
-                    std::istringstream ssx(dir->text());
-
+                    std::istringstream ssx(dirx->text());
                     std::copy(
                         std::istream_iterator<double>(ssx),
                         std::istream_iterator<double>(),
-                        v_cond_dx.data());
+                        mv_cond_vx.data() );
 
                     if (is_isotropic){
-                        v_cond_dy = v_cond_dx;
-                        v_cond_dz = v_cond_dx;
+                        mv_cond_vy = mv_cond_vx;
+                        mv_cond_vz = mv_cond_vx;
                     } else {
-                        dir = iter->findTag("y");
-                        std::istringstream ssy(dir->text());
+                        // y direction
+                        XmlElement::const_iterator diry = mat->findTag("y");
+                        std::istringstream ssy(diry->text());
 
                         std::copy(
                             std::istream_iterator<double>(ssy),
                             std::istream_iterator<double>(),
-                            v_cond_dy.data());
+                            mv_cond_vy.data());
 
-                        dir = iter->findTag("z");
-                        std::istringstream ssz(dir->text());
+                        // z direction
+                        XmlElement::const_iterator dirz = mat->findTag("z");
+                        std::istringstream ssz(dirz->text());
 
                         std::copy(
                             std::istream_iterator<double>(ssz),
                             std::istream_iterator<double>(),
-                            v_cond_dz.data());
+                            mv_cond_vz.data());
+                    }
+                } else if (material.compare("decomposing") == 0) {
+                    XmlElement::const_iterator dirx = mat->findTag("x");
+
+                    std::istringstream ssx(dirx->text());
+                    std::copy(
+                        std::istream_iterator<double>(ssx),
+                        std::istream_iterator<double>(),
+                        mv_cond_dx.data() );
+
+                    if (is_isotropic){
+                        mv_cond_dy = mv_cond_dx;
+                        mv_cond_dz = mv_cond_dx;
+                    } else {
+                        // y direction
+                        XmlElement::const_iterator diry = mat->findTag("y");
+                        std::istringstream ssy(diry->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssy),
+                            std::istream_iterator<double>(),
+                            mv_cond_dy.data());
+
+                        // z direction
+                        XmlElement::const_iterator dirz = mat->findTag("z");
+                        std::istringstream ssz(dirz->text());
+
+                        std::copy(
+                            std::istream_iterator<double>(ssz),
+                            std::istream_iterator<double>(),
+                            mv_cond_dz.data());
                     }
 
                 } else if (material.compare("final") == 0) {
-                    XmlElement::const_iterator dir = mat->findTag("x");
-                    std::istringstream ssx(dir->text());
+                    XmlElement::const_iterator dirx = mat->findTag("x");
+                    std::istringstream ssx(dirx->text());
 
                     std::copy(
                         std::istream_iterator<double>(ssx),
                         std::istream_iterator<double>(),
-                        v_cond_fx.data());
+                        mv_cond_fx.data());
 
                     if (is_isotropic){
-                        v_cond_fy = v_cond_fx;
-                        v_cond_fz = v_cond_fx;
+                        mv_cond_fy = mv_cond_fx;
+                        mv_cond_fz = mv_cond_fx;
                     } else {
-                        dir = iter->findTag("y");
-                        std::istringstream ssy(dir->text());
+                        XmlElement::const_iterator diry = mat->findTag("y");
+                        std::istringstream ssy(diry->text());
 
                         std::copy(
                             std::istream_iterator<double>(ssy),
                             std::istream_iterator<double>(),
-                            v_cond_fy.data());
+                            mv_cond_fy.data());
 
-                        dir = iter->findTag("z");
-                        std::istringstream ssz(dir->text());
+                        XmlElement::const_iterator dirz = mat->findTag("z");
+                        std::istringstream ssz(dirz->text());
 
                         std::copy(
                             std::istream_iterator<double>(ssz),
                             std::istream_iterator<double>(),
-                            v_cond_fz.data());
+                            mv_cond_fz.data());
                     }
                 } else {
-                    // "ERROR"
+                    std::cerr << "The material can be either Decomposing or Final. "
+                              << "On request the option Virgin will be added available."
+                              << std::endl;
+                    exit(1);
                 }
 
                 // Assert = max_coeff
@@ -270,24 +337,36 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
             {
                 std::string material = mat->tag();
 
-                if (material.compare("decomposing") == 0) {
+                if (material.compare("virgin") == 0) {
+                    mat->getAttribute("Tref", T_ref_v, "0.");
                     std::istringstream ss(mat->text());
 
                     std::copy(
                         std::istream_iterator<double>(ss),
                         std::istream_iterator<double>(),
-                        v_cp_d.data());
+                        mv_cp_v.data());
+                } else if (material.compare("decomposing") == 0) {
+                    mat->getAttribute("Tref", T_ref_d, "0.");
+                    std::istringstream ss(mat->text());
+
+                    std::copy(
+                        std::istream_iterator<double>(ss),
+                        std::istream_iterator<double>(),
+                        mv_cp_d.data());
                 } else if (material.compare("final") == 0) {
+                    mat->getAttribute("Tref", T_ref_f, "0.");
                     std::istringstream ss(mat->text());
 
                     std::copy(
                         std::istream_iterator<double>(ss),
                         std::istream_iterator<double>(),
-                        v_cp_f.data());
+                        mv_cp_f.data());
                 } else {
-                    // "ERROR"
+                    std::cerr << "The material can be either Decomposing or Final. "
+                              << "On request the option Virgin will be added available."
+                              << std::endl;
+                    exit(1);
                 }
-
                 // Assert max_coeff
             }
         } else if (option.compare("pyro_solid") == 0) {
@@ -350,7 +429,7 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     }
     m_n_ps = mv_ps.size();
     m_n_pg = mv_pg_comp.size();
-    // if (m_n_g = 0) error
+    // if (m_n_g = 0) error // Not necessarily
 
     mv_rhops_i.resize(m_n_ps);
     mv_rhops_f.resize(m_n_ps);
@@ -361,6 +440,8 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
 
     // Initial Conditions:
     mv_rhops = mv_rhops_i;
+
+    // Check if virgin model present
 }
 
 //==============================================================================
@@ -384,7 +465,7 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     double SolidPropertiesBulkChemistry::getPyrolysingSolidDensity(
         const int& sp) const
     {
-        int id = sp - m_n_g;
+        const int id = sp - m_n_g;
         if (id >= 0 && id < m_n_ps)
             return mv_rhops(id);
 
@@ -396,7 +477,7 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     double SolidPropertiesBulkChemistry::getPyrolysingSolidInitialDensity(
         const int& sp) const
     {
-        int id = sp - m_n_g;
+        const int id = sp - m_n_g;
         if (id >= 0 && id < m_n_ps)
             return mv_rhops_i(id);
 
@@ -408,7 +489,7 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
     double SolidPropertiesBulkChemistry::getPyrolysingSolidFinalDensity(
         const int& sp) const
     {
-        int id = sp - m_n_g;
+        const int id = sp - m_n_g;
         if (id >= 0 && id < m_n_ps)
             return mv_rhops_f(id);
 
@@ -418,42 +499,75 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
 //==============================================================================
 
     void SolidPropertiesBulkChemistry::solidEffectiveThermalConductivity(
-        VectorXd v_solid_lambda) const
+        VectorXd& v_solid_lambda) const
     {
-        double Tsolid1 = m_surf_state.getSurfaceT()(pos_T_trans);
-        double Tsolid2 = Tsolid1  * Tsolid1;
-        double Tsolid3 = Tsolid2 * Tsolid1;
-        double Tsolid4 = Tsolid3 * Tsolid1;
-        double Tsolidm1 = 1.       / Tsolid1;
-        double Tsolidm2 = Tsolidm1 / Tsolid1;
+        const double Ts1 = m_surf_state.getSurfaceT()(pos_T_trans);
+        const double Ts2 = Ts1 * Ts1;
+        const double Ts3 = Ts2 * Ts1;
+        const double Ts4 = Ts3 * Ts1;
+        const double Tsm1 = 1. / Ts1;
+        const double Tsm2 = Tsm1 / Ts1;
 
-        mv_temp(0) = Tsolid4;
-        mv_temp(1) = Tsolid3;
-        mv_temp(2) = Tsolid2;
-        mv_temp(3) = Tsolid1;
+        mv_temp(0) = Ts4;
+        mv_temp(1) = Ts3;
+        mv_temp(2) = Ts2;
+        mv_temp(3) = Ts1;
         mv_temp(4) = 1.;
-        mv_temp(5) = Tsolidm1;
-        mv_temp(6) = Tsolidm2;
+        mv_temp(5) = Tsm1;
+        mv_temp(6) = Tsm2;
 
         if ( ((mv_rhops_f-mv_rhops).cwiseAbs()).maxCoeff() < tol ) {
-                v_solid_lambda(0) = mv_temp.dot(v_cond_fx);
-                v_solid_lambda(1) = mv_temp.dot(v_cond_fy);
-                v_solid_lambda(2) = mv_temp.dot(v_cond_fz);
+            v_solid_lambda(0) = mv_temp.dot(mv_cond_fx);
+            v_solid_lambda(1) = mv_temp.dot(mv_cond_fy);
+            v_solid_lambda(2) = mv_temp.dot(mv_cond_fz);
         } else {
-                v_solid_lambda(0) = mv_temp.dot(v_cond_dx);
-                v_solid_lambda(1) = mv_temp.dot(v_cond_dy);
-                v_solid_lambda(2) = mv_temp.dot(v_cond_dz);
+            v_solid_lambda(0) = mv_temp.dot(mv_cond_dx);
+            v_solid_lambda(1) = mv_temp.dot(mv_cond_dy);
+            v_solid_lambda(2) = mv_temp.dot(mv_cond_dz);
         }
+
+        double ext = 0; //rho
+        v_solid_lambda(0) =
+            ext * mv_temp.dot(mv_cond_fx) + (1 - ext) * mv_temp.dot(mv_cond_vx);
+        v_solid_lambda(1) =
+            ext * mv_temp.dot(mv_cond_fy) + (1 - ext) * mv_temp.dot(mv_cond_vy);
+        v_solid_lambda(2) =
+            ext * mv_temp.dot(mv_cond_fz) + (1 - ext) * mv_temp.dot(mv_cond_vz);
+
+
     }
 
 //==============================================================================
 
     void SolidPropertiesBulkChemistry::solidHeatCapacity(
-        VectorXd v_solid_cp) const
-        {
-
-            //v_solid_cp = 
+        double& solid_cp) const
+    {
+        double Ts1;
+        if ( ((mv_rhops_f-mv_rhops).cwiseAbs()).maxCoeff() < tol ) {
+            Ts1 = m_surf_state.getSurfaceT()(pos_T_trans) - T_ref_f;
+        } else {
+            Ts1 = m_surf_state.getSurfaceT()(pos_T_trans) - T_ref_d;
         }
+        const double Ts2 = Ts1 * Ts1;
+        const double Ts3 = Ts2 * Ts1;
+        const double Ts4 = Ts3 * Ts1;
+        const double Tsm1 = 1. / Ts1;
+        const double Tsm2 = Tsm1 / Ts1;
+
+        mv_temp(0) = Ts4;
+        mv_temp(1) = Ts3;
+        mv_temp(2) = Ts2;
+        mv_temp(3) = Ts1;
+        mv_temp(4) = 1.;
+        mv_temp(5) = Tsm1;
+        mv_temp(6) = Tsm2;
+
+        if ( ((mv_rhops_f-mv_rhops).cwiseAbs()).maxCoeff() < tol ) {
+            solid_cp = mv_temp.dot(mv_cp_f);
+        } else {
+            solid_cp = mv_temp.dot(mv_cp_d);
+        }
+    }
 
 //==============================================================================
 

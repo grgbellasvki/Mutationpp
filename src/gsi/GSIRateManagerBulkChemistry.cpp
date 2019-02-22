@@ -157,7 +157,7 @@ private:
 };
 
 ObjectProvider<GSIRateManagerBulkChemistry, GSIRateManager>
-    gsi_rate_manager_bulk_chemistry("bulk_chemistry");
+    gsi_rate_manager_bulk_chemistry("bulk");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

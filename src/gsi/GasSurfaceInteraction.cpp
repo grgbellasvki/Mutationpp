@@ -94,11 +94,11 @@ GasSurfaceInteraction::GasSurfaceInteraction(
         xml_pos_solid_props = root_element.findTag("solid_properties");
         if (xml_pos_solid_props == root_element.end())
             errorSolidPropertiesNotProvided(solid_model);
-    } else if (m_gsi_mechanism == "bulk_chemistry") {
+    } else if (m_gsi_mechanism == "bulk") {
         xml_pos_solid_props = root_element.findTag("solid_properties");
         if (xml_pos_solid_props == root_element.end())
             errorSolidPropertiesNotProvided(solid_model);
-        solid_model = "bulk_chemistry";
+        solid_model = "bulk";
     } else {
         solid_model = "none";
     }
@@ -204,6 +204,27 @@ void GasSurfaceInteraction::surfaceReactionRatesGasAndSolid(
     for (int i = 0; i < m_thermo.nSpecies() + nPyrolysingSolids(); i++){
 	    p_surface_reac_rates_gas_solid[i] = v_surf_rates_per_reac(i);
 	}
+}
+
+//==============================================================================
+
+void GasSurfaceInteraction::solidEffectiveThermalConductivity(
+    double* const p_solid_lambda)
+{
+    const size_t n_dim= 3;
+    Eigen::VectorXd v_solid_lambda(n_dim);
+
+    mp_surf->solidEffectiveThermalConductivity(v_solid_lambda);
+
+    for (int i = 0; i < n_dim; i++)
+        p_solid_lambda[i] = v_solid_lambda(i);
+}
+
+//==============================================================================
+
+void GasSurfaceInteraction::solidHeatCapacity(
+    double* const p_solid_cp) {
+    mp_surf->solidHeatCapacity(*p_solid_cp);
 }
 
 //==============================================================================

@@ -70,22 +70,22 @@ ParticleRRHO::ParticleRRHO(const IO::XmlElement& xml_element)
         else if (iter->tag() == "vibrational_temperatures") {
             std::vector<std::string> tokens;
             String::tokenize(iter->text(), tokens, " ,\t\n\r\f\v");
-            
+
             std::vector<std::string>::const_iterator t_iter = tokens.begin();
             for ( ; t_iter != tokens.end(); ++t_iter)
                 m_vibrational_energies.push_back(atof(t_iter->c_str()));
         }
         else if (iter->tag() == "electronic_levels") {
             IO::XmlElement::const_iterator level_iter = iter->begin();
-            
+
             int    degeneracy;
             double temperature;
-            
+
             for ( ; level_iter != iter->end(); ++level_iter) {
                 if (level_iter->tag() == "level") {
                     level_iter->getAttribute("degeneracy",  degeneracy);
                     level_iter->getAttribute("energy", temperature);
-                    
+
                     // convert from 1/cm to K
                     m_electronic_energies.push_back(
                         std::make_pair(degeneracy, temperature * 1.4387));
