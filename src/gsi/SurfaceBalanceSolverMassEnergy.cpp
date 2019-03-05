@@ -252,11 +252,11 @@ public:
         // Diffusion Fluxes
         mp_diff_vel_calc->computeDiffusionVelocities(
             v_X.head(m_ns), mv_Vdiff);
-        mv_f = mv_rhoi.cwiseProduct(mv_Vdiff);
+        mv_f.head(m_ns) = mv_rhoi.cwiseProduct(mv_Vdiff);
 
         // Chemical Production Rates
         computeSurfaceReactionRates(mv_surf_reac_rates);
-        mv_f -= mv_surf_reac_rates;
+        mv_f.head(m_ns) -= mv_surf_reac_rates;
 
         // Blowing flux
         double mass_blow = mp_mass_blowing_rate->computeBlowingFlux(
@@ -268,13 +268,13 @@ public:
         double hmix = m_thermo.mixtureHMass();
 
         mv_f(pos_E) += mv_hi.dot(mv_Vdiff.cwiseProduct(mv_rhoi));
-        mv_f(pos_E) += mp_gas_heat_flux_calc->
+        mv_f(pos_E) -= mp_gas_heat_flux_calc->
                            computeGasFourierHeatFlux(v_X.tail(m_nE));
         mv_f(pos_E) += hmix * mass_blow;
 
         // Radiation
         if (mp_surf_rad != NULL)
-            mv_f(pos_E) += mp_surf_rad->surfaceNetRadiativeHeatFlux();
+            mv_f(pos_E) -= mp_surf_rad->surfaceNetRadiativeHeatFlux();
 
         // Steady state assumption virgin material enthalpy
         // if (ss -> )
@@ -319,10 +319,12 @@ public:
 
     Eigen::VectorXd& systemSolution()
     {
-        double a = m_jac.diagonal().maxCoeff();
+	mv_dX = m_jac.partialPivLu().solve(mv_f_unpert);
 
-        mv_dX = (m_jac + a*Eigen::MatrixXd::Ones(m_ns,m_ns)).
-                    fullPivLu().solve((1 + a)*mv_f_unpert);
+	/*double a = m_jac.diagonal().maxCoeff();
+
+        mv_dX = (m_jac + a*Eigen::MatrixXd::Ones(m_neqns,m_neqns)).
+                    fullPivLu().solve((1 + a)*mv_f_unpert);*/
         return mv_dX;
     }
 //==============================================================================
@@ -422,3 +424,4 @@ ObjectProvider<
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation
+

@@ -426,12 +426,12 @@ void NAME_MANGLE(source_energy_transfer)
 /**
  * Sets the wall using partial densities and temperatures
  */
-void NAME_MANGLE(set_wall_state)(double* v1, double* v2, int* vars);
+void NAME_MANGLE(set_surface_state)(double* v1, double* v2, int* vars);
 
 /**
  * 
  */
-void NAME_MANGLE(wall_production_rates)(double* v1);
+void NAME_MANGLE(surface_production_rates)(double* v1);
 
 /**
  * 
@@ -451,7 +451,7 @@ void NAME_MANGLE(solve_surface_balance)();
 /**
  * 
  */
-void NAME_MANGLE(get_wall_state)(double* v1, double* v2, int* vars);
+void NAME_MANGLE(get_surface_state)(double* v1, double* v2, int* vars);
 
 /**
  * 

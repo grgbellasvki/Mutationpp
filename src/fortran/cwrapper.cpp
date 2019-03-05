@@ -433,7 +433,7 @@ void NAME_MANGLE(set_surface_state)(double* v1, double* v2, int* vars)
 }
 
 //==============================================================================
-void NAME_MANGLE(wall_production_rates)(double* const v1)
+void NAME_MANGLE(surface_production_rates)(double* const v1)
 {
      p_mix->surfaceReactionRates(v1);
 }
@@ -480,8 +480,5 @@ void NAME_MANGLE(convert_ys_to_ye)(
 }
 
 //==============================================================================
-
-
-
 
 
