@@ -88,7 +88,9 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     set (CMAKE_CXX_FLAGS "-g")
 endif ()
 
-
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_MACOSX_RPATH 1)
+endif()
 ################################################################################
 # Fortran wrapper options
 ################################################################################
@@ -145,6 +147,9 @@ endif()
 ################################################################################
 # Source code
 ################################################################################
+option(ENABLE_COVERAGE "Generate coverage for codecov.io" OFF)
+find_package(codecov)
+
 # Descend into the src directory to build all targets and libraries
 include_directories(
     ${CMAKE_SOURCE_DIR}/install/include
@@ -164,9 +169,17 @@ add_subdirectory(src)
 ################################################################################
 # CTest
 ################################################################################
-option (ENABLE_TESTING
-    "Enable regression testing with CTest (requires Boost.Test library)" OFF)
-if (ENABLE_TESTING OR ${CMAKE_BUILD_TYPE} MATCHES "Coverage")
+option(ENABLE_TESTING "Enable regression testing with CTest" OFF)
+
+if (ENABLE_TESTING OR ENABLE_COVERAGE)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+list(APPEND LCOV_REMOVE_PATTERNS 
+    "/usr/*"
+    "'${PROJECT_SOURCE_DIR}/tests/*'"
+    "'${PROJECT_SOURCE_DIR}/install/*'"
+    "'${PROJECT_SOURCE_DIR}/thirdparty/*'"
+)
+coverage_evaluate()
