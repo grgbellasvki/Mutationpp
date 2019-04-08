@@ -83,6 +83,9 @@ GasSurfaceInteraction::GasSurfaceInteraction(
         root_element.findTag("surface_chemistry");
     XmlElement::const_iterator xml_pos_surf_rad =
         root_element.findTag("surface_radiation");
+    XmlElement::const_iterator xml_pos_surf_inelastic =
+        root_element.findTag("surface_inelastc");
+    
 
     // Setting up solid properties
     std::string solid_model;
@@ -108,6 +111,7 @@ GasSurfaceInteraction::GasSurfaceInteraction(
         *xml_pos_surf_feats,
         *xml_pos_surf_chem,
         *xml_pos_surf_rad,
+	*xml_pos_surf_inelastic,
         *mp_surf_state };
     mp_surf = Factory<Surface>::create(
         m_gsi_mechanism, data_surface);
@@ -213,6 +217,13 @@ void GasSurfaceInteraction::setIterationsSurfaceBalance(const int& iter)
 void GasSurfaceInteraction::getMassBlowingRate(double& mdot){
     mdot = mp_surf->massBlowingRate();
 }
+
+//==============================================================================
+
+/*void GasSurfaceInteraction::getInelasticTerm
+         (const Eigen::VectorXd& v_X, const Eigen::VectorXd& v_h,  const Eigen::VectorXd& chem_souce, double& ine){ //@todo
+   ine = mp_surf->surfaceInelasticTerm(v_X, v_h, chem_souce); 
+}*/
 
 //==============================================================================
 

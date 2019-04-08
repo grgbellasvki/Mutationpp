@@ -80,6 +80,19 @@ public:
     double computeGasFourierHeatFlux(
         const Eigen::VectorXd& v_T);
 
+//==============================================================================
+    /*
+     * Function used to compute the total fourier heat flux in
+     * the gas with given the surface temperature(s) and the ones imposed at
+     * a given distance from the surface. The temperature gradients
+     * are computed based on a first order differentiation.
+     *
+     * @param Surface temperatures
+     *
+     */
+    double computeGasFourierVibrationalHeatFlux(
+        const Eigen::VectorXd& v_T);
+
 private:
     Mutation::Transport::Transport& m_transport;
 

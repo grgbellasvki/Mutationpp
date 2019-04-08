@@ -179,6 +179,13 @@ public:
      */
     void getMassBlowingRate(double& mdot);
 
+    /**
+     * Function which return the inelastic energy term.
+     *
+     */
+    //void getInelasticTerm(const Eigen::VectorXd& v_X, const Eigen::VectorXd& v_h,  const Eigen::VectorXd& chem_souce, double& ine);
+
+
 private:
     /**
      * Error function; wrong type of Gas Surface Interaction input file.

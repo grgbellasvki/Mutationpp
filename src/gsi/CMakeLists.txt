@@ -38,8 +38,10 @@ add_sources(mutation++
     SolidPropertiesSteadyState.cpp
     SurfaceChemistry.cpp
     SurfaceRadiation.cpp
+    SurfaceInelastic.cpp
     SurfaceBalanceSolverMass.cpp
     SurfaceBalanceSolverMassEnergy.cpp
+    SurfaceBalanceSolverMassEnergyTTv.cpp
     SurfacePropertiesNull.cpp
     SurfacePropertiesAblation.cpp
     SurfaceState.cpp
@@ -59,3 +61,4 @@ install(FILES SurfaceChemistry.h DESTINATION include/mutation++)
 install(FILES SurfaceProperties.h DESTINATION include/mutation++)
 install(FILES SurfaceRadiation.h DESTINATION include/mutation++)
 install(FILES SurfaceState.h DESTINATION include/mutation++)
+#install(FILES Surfacinelastic.h DESTINATION include/mutation++)
