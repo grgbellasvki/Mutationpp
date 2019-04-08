@@ -302,6 +302,7 @@ public:
 
     void updateJacobian(Eigen::VectorXd& v_X)
     {
+        m_jac.setZero();
         // Perturbing Mass
         mv_f_unpert = mv_f;
         for (int i_ns = 0; i_ns < m_ns; i_ns++){
@@ -312,7 +313,8 @@ public:
             updateFunction(v_X);
 
             // Update Jacobian column
-            m_jac.col(i_ns) = (mv_f-mv_f_unpert) / pert;
+            //m_jac.col(i_ns) = (mv_f-mv_f_unpert) / pert;
+            m_jac.col(i_ns).head(m_ns + 1) = (mv_f-mv_f_unpert).head(m_ns + 1) / pert;
 
             // Unperturb mole fractions
             v_X(i_ns) = X_unpert;
@@ -330,10 +332,9 @@ public:
 	X_unpert = v_X(pos_E+1);
         v_X(pos_E+1) += T_pert;
         updateFunction(v_X);
-        m_jac.col(pos_E+1) = (mv_f-mv_f_unpert) / T_pert;
+        m_jac.col(pos_E+1).tail(m_nT) = (mv_f-mv_f_unpert).tail(m_nT) / T_pert;
+
         v_X(pos_E+1) = X_unpert;
-	for (int i=0; i<m_ns; ++i) m_jac(i, pos_E+1) = 0; //@todo fix these loops
-	for (int i=0; i<m_ns; ++i) m_jac(pos_E+1, i) = 0;
     }
 
 //==============================================================================

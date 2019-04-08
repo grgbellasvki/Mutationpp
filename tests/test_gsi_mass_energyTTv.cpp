@@ -140,7 +140,7 @@ TEST_CASE
 	double inelastic;
         //double inelastic = Mutation::GasSurfaceInteraction::SurfaceInelastic.surfaceInelasticTerm(xi_s, v_hi, wdot);
         //mix.getInelasticTerm(xi_s.data(), v_hi.data(), wdot.data(), inelastic);
-        mix.getInelasticTerm(xi_s, v_hi, wdot, inelastic);
+        //mix.getInelasticTerm(xi_s, v_hi, wdot, inelastic);
 
         // Building balance functions
         VectorXd F(neq);

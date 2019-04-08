@@ -75,9 +75,9 @@ double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorX
     double inleastic_term = 0.;
     double tol = 1.E-19;
     if (m_eff_coll > tol) {
+	double thermal_speed;
         for(int i = 0; i < m_ns; ++i) {
 	    //thermal speed of species i
-	    double thermal_speed;
 	    //if (i < m_thermo.hasElectrons()) thermal_speed = sqrt(RU*T_vib/(2.*PI*m_speciesMw(i)));
 	    //else thermal_speed = sqrt(RU*T_tra/(2.*PI*m_speciesMw(i))); 
 	    if (i < m_thermo.hasElectrons()) thermal_speed = sqrt(T_vib)*m_therm_vel_over_T(i);
