@@ -41,7 +41,7 @@ TEST_CASE
     SECTION("Catalysis Gamma Heteronuclear Reactions Single Temperature.")
     {
         // Setting up M++
-        MixtureOptions opts("air5_gsi_RRHO_ChemNonEq1T");
+        MixtureOptions opts("smb_air5_RRHO_ChemNonEq1T");
         Mixture mix(opts);
         const size_t ns = mix.nSpecies();
         VectorXd mol_mass = mix.speciesMw();
@@ -107,7 +107,7 @@ TEST_CASE
     SECTION("Catalysis Gamma Full Ion Recombination Reactions Single Temperature.")
     {
         // Setting up M++
-        MixtureOptions opts("air11_gsi_RRHO_ChemNonEq1T");
+        MixtureOptions opts("smb_air11_RRHO_ChemNonEq1T");
         Mixture mix(opts);
         const size_t ns = mix.nSpecies();
         VectorXd mol_mass = mix.speciesMw();
@@ -215,7 +215,7 @@ TEST_CASE
     SECTION("Phenomenological Ablation for Carbon Oxidation, Nitridation and Sublimation.")
     {
         // Setting up M++
-        MixtureOptions opts("aircarbon11_gsi_RRHO_ChemNonEq1T");
+        MixtureOptions opts("smb_aircarbon11_RRHO_ChemNonEq1T");
         Mixture mix(opts);
         const size_t ns = mix.nSpecies();
         VectorXd mol_mass = mix.speciesMw();
@@ -284,7 +284,7 @@ TEST_CASE
     SECTION("Catalysis Gamma Homonuclear Reactions.")
     {
         // Setting up M++
-        MixtureOptions opts("o2_gsi_RRHO_ChemNonEq1T");
+        MixtureOptions opts("smb_o2_RRHO_ChemNonEq1T");
         Mixture mix(opts);
         const size_t ns = mix.nSpecies();
         double mol_mass = mix.speciesMw(0);
@@ -324,4 +324,5 @@ TEST_CASE
             }
         }
     }
+
 }

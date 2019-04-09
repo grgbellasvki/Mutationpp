@@ -61,25 +61,29 @@ public:
           mp_diff_vel_calc(NULL),
           mp_mass_blowing_rate(NULL),
           m_ns(m_thermo.nSpecies()),
-          m_nE(m_thermo.nEnergyEqns()),
-          m_neqns(m_thermo.nSpecies()+1),
+          m_nT(m_thermo.nEnergyEqns()),
+          m_nE(1),
+          m_neqns(m_ns+m_nE),
+          m_ns_T(m_ns+m_nT),
           mv_wdot(m_ns),
           mv_rhoi(m_ns),
-          mv_hi(m_ns),
+          mv_hi(m_ns*m_nT),
           mv_Vdiff(m_ns),
-          mv_X(m_neqns),
-          mv_dX(m_neqns),
+          mv_X(m_ns_T),
+          mv_dX(m_ns_T),
           mv_f(m_neqns),
           mv_f_unpert(m_neqns),
           m_jac(m_neqns, m_neqns),
-          m_pert(1.e-2),
+          m_tol(1.e-12),
+          m_pert_m(1.e-2),
+          m_pert_T(1.e0),
           pos_E(m_ns),
           pos_T_trans(0),
           m_phi(m_surf_state.solidProps().getPhiRatio()),
           m_h_v(m_surf_state.solidProps().getEnthalpyVirginMaterial()),
           set_state_with_rhoi_T(1),
           mv_surf_reac_rates(m_ns),
-          is_surf_in_thermal_eq(false),
+          is_surf_in_thermal_eq(true),
           is_gas_rad_on(false)
     {
         // Initializing surface chemistry
@@ -118,7 +122,7 @@ public:
         // Setup NewtonSolver
         setMaxIterations(5);
         setWriteConvergenceHistory(false);
-        setEpsilon(1.e-18);
+        setEpsilon(m_tol);
     }
 
 //=============================================================================
@@ -169,9 +173,9 @@ public:
 //=============================================================================
 
     void setDiffusionModel(
-        const Eigen::VectorXd& v_mole_frac_edge, const double& dx)
+        const Eigen::VectorXd& v_x_edge, const double& dx)
     {
-        mp_diff_vel_calc->setDiffusionModel(v_mole_frac_edge, dx);
+        mp_diff_vel_calc->setDiffusionModel(v_x_edge, dx);
     }
 
 //=============================================================================
@@ -183,7 +187,7 @@ public:
 
 //=============================================================================
 
-    virtual void setGasRadHeatFlux(const double& gas_rad_heat_flux)
+    void setGasRadHeatFlux(const double& gas_rad_heat_flux)
     {
         if (mp_surf_rad != NULL)
             mp_surf_rad->gasRadiativeHeatFlux(gas_rad_heat_flux);
@@ -198,27 +202,28 @@ public:
 
     	// Getting the state
         mv_rhoi = m_surf_state.getSurfaceRhoi();
-        double T_trans = m_surf_state.getSurfaceT()(pos_T_trans);
+        mv_X.tail(m_nT) = m_surf_state.getSurfaceT();
 
         // Impose equilibrium
-        if (is_surf_in_thermal_eq){
-             mv_X.tail(m_nE).setConstant(T_trans);
-        } else {
-            mv_X.tail(m_nE) = m_surf_state.getSurfaceT();
-        }
+        if (is_surf_in_thermal_eq)
+            mv_X.tail(m_nT-1).setConstant(mv_X(pos_E));
 
-        saveUnperturbedPressure(mv_rhoi, mv_X.tail(m_nE));
+        saveUnperturbedPressure(mv_rhoi, mv_X.tail(m_nT));
 
-        // Changing to the solution variables and solving
-        computeMoleFracfromPartialDens(mv_rhoi, mv_X.tail(m_nE), mv_X);
+        // Changing to the solution variables
+        computeMoleFracfromPartialDens(mv_rhoi, mv_X.tail(m_nT), mv_X);
+        applyTolerance(mv_X);
+
+        // Solving
         mv_X = solve(mv_X);
 
+        applyTolerance(mv_X);
         computePartialDensfromMoleFrac(
-            mv_X.head(m_ns), mv_X.tail(m_nE), mv_rhoi);
+            mv_X.head(m_ns), mv_X.tail(m_nT), mv_rhoi);
 
         // Setting the state again
         m_surf_state.setSurfaceState(
-            mv_rhoi.data(), mv_X.tail(m_nE).data(), set_state_with_rhoi_T);
+            mv_rhoi.data(), mv_X.tail(m_nT).data(), set_state_with_rhoi_T);
     }
 
 //==============================================================================
@@ -238,50 +243,49 @@ public:
 
     void updateFunction(Eigen::VectorXd& v_X)
     {
+        applyTolerance(mv_X);
+        // Comment: (+) If flux enters the volume.
+        // Assuming the normal vector of the surface to be pointing from the
+        // solid to the gas phase.
         mv_f.setZero();
 
     	// Setting Initial Gas and Surface State;
-        computePartialDensfromMoleFrac(
-            v_X.head(m_ns), v_X.tail(m_nE), mv_rhoi);
+         computePartialDensfromMoleFrac(
+            v_X.head(m_ns), v_X.tail(m_nT), mv_rhoi);
 
         m_thermo.setState(
-            mv_rhoi.data(), v_X.tail(m_nE).data(), set_state_with_rhoi_T);
+            mv_rhoi.data(), v_X.tail(m_nT).data(), set_state_with_rhoi_T);
         m_surf_state.setSurfaceState(
-            mv_rhoi.data(), v_X.tail(m_nE).data(), set_state_with_rhoi_T);
+            mv_rhoi.data(), v_X.tail(m_nT).data(), set_state_with_rhoi_T);
 
         // Diffusion Fluxes
         mp_diff_vel_calc->computeDiffusionVelocities(
             v_X.head(m_ns), mv_Vdiff);
-        mv_f = mv_rhoi.cwiseProduct(mv_Vdiff);
+        applyTolerance(mv_Vdiff);
+        mv_f.head(m_ns) += mv_rhoi.cwiseProduct(mv_Vdiff);
 
         // Chemical Production Rates
         computeSurfaceReactionRates(mv_surf_reac_rates);
-        mv_f -= mv_surf_reac_rates;
+        mv_f.head(m_ns) -= mv_surf_reac_rates;
 
         // Blowing flux
         double mass_blow = mp_mass_blowing_rate->computeBlowingFlux(
             mv_surf_reac_rates);
-        mv_f.head(m_ns) += mv_rhoi * mass_blow / mv_rhoi.sum();
+        mv_f.head(m_ns) += mv_rhoi*mass_blow/mv_rhoi.sum();
 
         // Energy
         m_thermo.getEnthalpiesMass(mv_hi.data());
         double hmix = m_thermo.mixtureHMass();
 
-        mv_f(pos_E) += mv_hi.dot(mv_Vdiff.cwiseProduct(mv_rhoi));
-        mv_f(pos_E) += mp_gas_heat_flux_calc->
-                           computeGasFourierHeatFlux(v_X.tail(m_nE));
-        mv_f(pos_E) += hmix * mass_blow;
+        mv_f(pos_E) +=
+           mv_hi.head(m_ns).dot(mv_Vdiff.cwiseProduct(mv_rhoi));
+        mv_f(pos_E) +=
+            mp_gas_heat_flux_calc->computeGasFourierHeatFlux(v_X.tail(m_nT));
+        mv_f(pos_E) += hmix*mass_blow;
 
         // Radiation
         if (mp_surf_rad != NULL)
-            mv_f(pos_E) += mp_surf_rad->surfaceNetRadiativeHeatFlux();
-
-        // Steady state assumption virgin material enthalpy
-        // if (ss -> )
-        mv_f(pos_E) -= mass_blow * (1+m_phi) * m_h_v;
-        // else
-        // mv_f(pos_E) -= mass_blow * m_h_s;
-        // mv_f(pos_e) -= q_cond;
+            mv_f(pos_E) -= mp_surf_rad->surfaceNetRadiativeHeatFlux();
     }
 
 //==============================================================================
@@ -292,7 +296,7 @@ public:
         mv_f_unpert = mv_f;
         for (int i_ns = 0; i_ns < m_ns; i_ns++){
             double X_unpert = v_X(i_ns);
-            double pert = m_pert;
+            double pert = m_pert_m;
             v_X(i_ns) += pert;
 
             updateFunction(v_X);
@@ -305,31 +309,42 @@ public:
         }
 
         // Perturbing Energy
-        double T_pert = m_pert;
+        double T_pert = m_pert_T;
         double X_unpert = v_X(pos_E);
         v_X(pos_E) += T_pert;
+        if (is_surf_in_thermal_eq)
+            v_X.tail(m_nT-1).setConstant(v_X(pos_E));
 
         updateFunction(v_X);
         m_jac.col(pos_E) = (mv_f-mv_f_unpert) / T_pert;
 
         v_X(pos_E) = X_unpert;
+        if (is_surf_in_thermal_eq)
+            v_X.tail(m_nT-1).setConstant(v_X(pos_E));
     }
 
 //==============================================================================
 
     Eigen::VectorXd& systemSolution()
     {
-        double a = m_jac.diagonal().maxCoeff();
+        double a = m_jac.topLeftCorner(m_ns, m_ns).diagonal().maxCoeff();
+        m_jac.topLeftCorner(m_ns, m_ns) += a*Eigen::MatrixXd::Ones(m_ns,m_ns);
+        mv_dX.head(m_neqns) = m_jac.fullPivLu().solve(mv_f_unpert);
 
-        mv_dX = (m_jac + a*Eigen::MatrixXd::Ones(m_ns,m_ns)).
-                    fullPivLu().solve((1 + a)*mv_f_unpert);
+        if(!is_surf_in_thermal_eq)
+            mv_dX.tail(m_nT-1).setConstant(0.);
+        else
+            mv_dX.tail(m_nT-1).setConstant(mv_dX(pos_E));
+
+        applyTolerance(mv_dX);
+
         return mv_dX;
     }
 //==============================================================================
 
     double norm() {
-        // return mv_dX.lpNorm<Eigen::Infinity>();
-        return mv_f.lpNorm<Eigen::Infinity>();
+        return mv_dX.lpNorm<Eigen::Infinity>();
+        // return mv_f.lpNorm<Eigen::Infinity>();
     }
 
 //==============================================================================
@@ -361,7 +376,6 @@ private:
     	v_rhoi = v_xi.cwiseProduct(m_thermo.speciesMw().matrix()) *
     			  m_Psurf / (v_T(pos_T_trans) * RU);
     }
-
 //==============================================================================
 
     void errorSurfaceStateNotSet() const
@@ -371,7 +385,12 @@ private:
             << "The surface state must have been set!";
         }
     }
+//==============================================================================
 
+    inline void applyTolerance(Eigen::VectorXd& v_x) const {
+        for (int i = 0; i < m_ns; i++)
+            if (std::abs(v_x(i)) < m_tol) v_x(i) = 0.;
+    }
 //==============================================================================
 private:
     Mutation::Thermodynamics::Thermodynamics& m_thermo;
@@ -389,8 +408,10 @@ private:
     bool is_gas_rad_on;
 
     const size_t m_ns;
+    const size_t m_nT;
     const size_t m_nE;
     const size_t m_neqns;
+    const size_t m_ns_T;
 
     Eigen::VectorXd mv_Tsurf;
     double m_Psurf;
@@ -404,16 +425,18 @@ private:
     Eigen::VectorXd mv_dX;
     Eigen::VectorXd mv_f;
     Eigen::MatrixXd m_jac;
-    double m_pert;
     Eigen::VectorXd mv_f_unpert;
     Eigen::VectorXd mv_surf_reac_rates;
+    double m_pert_m;
+    double m_pert_T;
+    double m_tol;
 
     const double m_phi;
     const double m_h_v;
 
-    const int pos_E;
-    const int pos_T_trans;
-    const int set_state_with_rhoi_T;
+    const size_t pos_E;
+    const size_t pos_T_trans;
+    const size_t set_state_with_rhoi_T;
 };
 
 ObjectProvider<

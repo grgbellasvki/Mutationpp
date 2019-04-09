@@ -81,7 +81,6 @@ void DiffusionVelocityCalculator::computeDiffusionVelocities(
         << "Calling DiffusionVelocityCalculator::computeDrivingForces() before "
         << "calling DiffusionVelocityCalculator::setDiffusionCalculator().";
     }
-
     mv_dxidx = (v_mole_frac - mv_mole_frac_edge)/m_dx;
 
     double electric_field = 0.E0;

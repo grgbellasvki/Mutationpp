@@ -1,10 +1,10 @@
-<mixture mechanism="air11_mech"
-         thermo_db="RRHO"
+<mixture mechanism="none"
+         thermo_db="NASA-9"
          state_model="ChemNonEq1T"
-         gsi_mechanism="air11_gsi_catalysis_gamma_ion_recomb">
+         gsi_mechanism="seb_air_catalysis_gamma_rad_eq">
 
     <species>
-        e- N O NO N2 O2 N+ O+ NO+ N2+ O2+
+        N O NO N2 O2
     </species>
 
     <element_compositions default="air">
@@ -12,4 +12,3 @@
     </element_compositions>
 
 </mixture>
-
