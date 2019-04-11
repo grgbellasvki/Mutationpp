@@ -1,7 +1,7 @@
 <mixture mechanism="air5_mech"
          thermo_db="NASA-9"
          state_model="ChemNonEq1T"
-         gsi_mechanism="bulk_air_pyro_goldstein">
+         gsi_mechanism="bulk_pyro_goldstein">
 
     <species>
         N O NO N2 O2

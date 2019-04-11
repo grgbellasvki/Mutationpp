@@ -526,15 +526,14 @@ SolidPropertiesBulkChemistry::SolidPropertiesBulkChemistry(ARGS args)
             v_solid_lambda(2) = mv_temp.dot(mv_cond_dz);
         }
 
-        double ext = 0; //rho
+        /* double ext = 0; //rho
         v_solid_lambda(0) =
             ext * mv_temp.dot(mv_cond_fx) + (1 - ext) * mv_temp.dot(mv_cond_vx);
         v_solid_lambda(1) =
             ext * mv_temp.dot(mv_cond_fy) + (1 - ext) * mv_temp.dot(mv_cond_vy);
         v_solid_lambda(2) =
             ext * mv_temp.dot(mv_cond_fz) + (1 - ext) * mv_temp.dot(mv_cond_vz);
-
-
+        */
     }
 
 //==============================================================================
