@@ -177,7 +177,7 @@ TEST_CASE
             5.53472512800491e-9, 1.25740916978889e-05, -3.31957114005794e-2,
             1.7174710171051e1, 3.79730067921415e2, 0., 0.;
         VectorXd v_cp_f(ncoeff); v_cp_f <<
-            0., 0., 0., 1305., 1933.8, -394500., 0.;
+            0., 0., 0., 0.1305, 1933.8, -394500., 0.;
 
         VectorXd v_lambda_x_d(ncoeff); v_lambda_x_d <<
             0., 0., -6.79172921619856e-06, 0.0094013164, -1.3718533625, 0., 0.;
@@ -198,10 +198,10 @@ TEST_CASE
         double cp;
 
         // Conditions virgin solid
-        size_t nT = 20;
+        size_t nT = 15;
         for (int iT = 0; iT < nT; iT++) {
             const double P = 10000.;
-            double Ts = 500. + iT * 50;
+            double Ts = 300. + iT * 100;
             mix.equilibrate(Ts, P);
             mix.densities(rhoi.data());
 
@@ -242,10 +242,11 @@ TEST_CASE
             CHECK(cp == Approx(cp_mpp).epsilon(tol));
         }
 
+        nT = 15;
         // Conditions decomposed solid
         for (int iT = 0; iT < nT; iT++) {
             const double P = 10000.;
-            double Ts = 500. + iT * 50;
+            double Ts = 500. + iT * 100;
             mix.equilibrate(Ts, P);
             mix.densities(rhoi.data());
 

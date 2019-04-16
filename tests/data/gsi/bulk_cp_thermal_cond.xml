@@ -19,7 +19,7 @@
                 5.53472512800491e-9 1.25740916978889e-05 -3.31957114005794e-2 1.7174710171051e1 3.79730067921415e2 0. 0.
             </decomposing>
             <final type="coefficients" Tref = "0.">
-                 0. 0. 0. 1305. 1933.8 -394500. 0.
+                0. 0. 0. 0.1305 1933.8 -394500. 0.
             </final>
         </heat_capacity>
         <pyro_solid label = "p" component = "Ra" init_dens ="15." final_dens ="5."/>
