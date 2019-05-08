@@ -33,6 +33,7 @@
 #include "GasSurfaceInteraction.h"
 #include "SolidProperties.h"
 #include "Surface.h"
+#include "SurfaceProperties.h"
 #include "SurfaceState.h"
 
 using namespace Eigen;
@@ -216,11 +217,16 @@ void GasSurfaceInteraction::getMassBlowingRate(double& mdot){
 
 //==============================================================================
 
+const SurfaceProperties& GasSurfaceInteraction::getSurfaceProperties(){
+    return mp_surf_state->getSurfaceProperties();
+}
+
+//==============================================================================
+
 inline void GasSurfaceInteraction::errorWrongTypeofGSIFile(
     const std::string& gsi_root_tag)
 {
-    if (gsi_root_tag != "gsi")
-    {
+    if (gsi_root_tag != "gsi") {
         throw InvalidInputError("GasSurfaceInteraction", gsi_root_tag)
         << "Root element in Gas Surface Interaction input file "
         << gsi_root_tag << " is not of 'gsi' type!";

@@ -33,6 +33,7 @@
 #include "GSIRateManager.h"
 #include "GSIReaction.h"
 #include "SurfaceChemistry.h"
+#include "SurfaceState.h"
 
 using namespace Eigen;
 
@@ -52,7 +53,7 @@ SurfaceChemistry::SurfaceChemistry(
 {
     // Filling in the reaction vector
     DataGSIReaction data_gsi_reaction = {
-        thermo, transport, surf_state};
+        thermo, transport, surf_state.getSurfaceProperties()};
 
     for (data_gsi_reaction.s_iter_reaction = xml_surf_chem.begin();
          data_gsi_reaction.s_iter_reaction != xml_surf_chem.end();
@@ -61,12 +62,11 @@ SurfaceChemistry::SurfaceChemistry(
         data_gsi_reaction.s_iter_reaction->
             getAttribute("type", m_reaction_type,
                 "Error in the reaction input. A type attribute should "
-              "be provided with the reaction type.");
+                "be provided with the reaction type.");
 
         addReaction(Factory<GSIReaction>::create(
             m_reaction_type, data_gsi_reaction));
     }
-
 
     // Assigning the mp_rate_manager pointer
     DataGSIRateManager data_rate_manager = {

@@ -125,14 +125,14 @@ public:
     /**
      * Returns a constant reference to the surface properties class.
      */
-    const SurfaceProperties& surfaceProps() const {
+    const SurfaceProperties& getSurfaceProperties() const {
          return *mp_surf_props;
     }
 
     /**
-     * Returns a constant reference to the surface properties class.
+     * Returns a constant reference to the solid properties class.
      */
-    const SolidProperties& solidProps() const {
+    const SolidProperties& getSolidProperties() const {
         return *mp_solid_props;
     }
 

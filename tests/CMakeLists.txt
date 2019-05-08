@@ -33,6 +33,7 @@ set(test_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/test_dXidT.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_energies.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_gsi_detailed.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_gsi_mass.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_gsi_mass_energy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_gsi_rates.cpp

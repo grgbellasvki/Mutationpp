@@ -40,7 +40,7 @@ namespace Mutation {
     namespace GasSurfaceInteraction {
 
 class GSIRateLaw;
-class SurfaceState;
+class SurfaceProperties;
 //==============================================================================
 
 /**
@@ -49,7 +49,7 @@ class SurfaceState;
 struct DataGSIReaction {
     Mutation::Thermodynamics::Thermodynamics& s_thermo;
     const Mutation::Transport::Transport& s_transport;
-    const SurfaceState& s_surf_state;
+    const SurfaceProperties& s_surf_props;
     Mutation::Utilities::IO::XmlElement::const_iterator s_iter_reaction;
 };
 
@@ -76,7 +76,8 @@ public:
      */
     GSIReaction(ARGS args)
         : mp_rate_law(NULL),
-          m_conserves(true){ }
+          m_conserves(true),
+          m_surf_props(args.s_surf_props){ }
 
 	/// Returns name of this type.
 	static std::string typeName() { return "GSIReaction"; }
@@ -117,6 +118,7 @@ protected:
     bool m_conserves;
 
     GSIRateLaw* mp_rate_law;
+    const SurfaceProperties& m_surf_props;
 
 //==============================================================================
     /**
@@ -136,7 +138,6 @@ protected:
      */
     void parseFormula(
         const Mutation::Thermodynamics::Thermodynamics& thermo,
-        const SurfaceState& surf_state,
         const Mutation::Utilities::IO::XmlElement& node_reaction)
     {
         std::string reactants;
@@ -144,9 +145,9 @@ protected:
         splitFormulainReactantsProducts(reactants, products, node_reaction);
 
         parseSpecies(m_reactants, m_reactants_surf,
-            reactants, node_reaction, thermo, surf_state);
+            reactants, node_reaction, thermo);
         parseSpecies(m_products, m_products_surf,
-            products, node_reaction, thermo, surf_state);
+            products, node_reaction, thermo);
     }
 
 //==============================================================================
@@ -167,7 +168,7 @@ protected:
 
         reactants = m_formula.substr(0, pos_equal);
         products = m_formula.substr(pos_equal + 2, m_formula.length()
-                                                   - pos_equal - 1);
+            - pos_equal - 1);
     }
 
 //==============================================================================
@@ -187,8 +188,7 @@ protected:
         std::vector<int>& species, std::vector<int>& species_surf,
         std::string& str_chem_species,
         const Mutation::Utilities::IO::XmlElement& node_reaction,
-        const Mutation::Thermodynamics::Thermodynamics& thermo,
-        const SurfaceState& surf_state) = 0;
+        const Mutation::Thermodynamics::Thermodynamics& thermo) = 0;
 };
 
     } // namespace GasSurfaceInteraction

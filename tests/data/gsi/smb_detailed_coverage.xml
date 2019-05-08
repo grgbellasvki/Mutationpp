@@ -1,0 +1,12 @@
+<gsi gsi_mechanism = "detailed_mass">
+
+    <surface_properties type = "detailed">
+        <site label = "s" sigma = "3.e19" species = "N O N2" />
+        <site label = "c" sigma = "7.e19" species = "NO O" />
+        <site label = "p" sigma = "1.e20" species = "C" />
+        <surface label="b" species="C" />
+    </surface_properties>
+
+    <surface_chemistry>
+    </surface_chemistry>
+</gsi>

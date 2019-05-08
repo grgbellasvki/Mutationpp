@@ -87,7 +87,7 @@ public:
                 is_surface_set = true;
             } else {
                 throw InvalidInputError("SurfaceProperties", option)
-                 << option << "is a wrong input for surface "
+                 << option << " is a wrong input for surface "
                 << "properties.";
             }
 
@@ -114,7 +114,7 @@ public:
      * Returns the index of the surface species according to the order they
      * appear in the input file, following the gas phase species.
      */
-     int surfaceSpeciesIndex(const std::string& str_sp) const {
+    int surfaceSpeciesIndex(const std::string& str_sp) const {
         for (int i_sp = 0; i_sp < n_surf_sp; i_sp++) {
             if (v_surf_sp[i_sp] == str_sp)
                 return n_gas_sp + i_sp;
@@ -144,12 +144,12 @@ private:
     {
         std::istringstream iss(species);
         std::vector<std::string> v_species;
-        std::copy(std::istream_iterator<std::string>(iss),
-                  std::istream_iterator<std::string>(),
-                  std::back_inserter(v_species));
+        std::copy(
+            std::istream_iterator<std::string>(iss),
+            std::istream_iterator<std::string>(),
+            std::back_inserter(v_species));
 
-        for (int i_sp = 0; i_sp < v_species.size(); ++i_sp)
-        {
+        for (int i_sp = 0; i_sp < v_species.size(); ++i_sp) {
             int id_sp = m_thermo.speciesIndex(v_species[i_sp]);
 
             if (id_sp == -1) {

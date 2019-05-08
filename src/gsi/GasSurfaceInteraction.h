@@ -37,6 +37,7 @@ namespace Mutation {
 
 class Surface;
 class SurfaceState;
+class SurfaceProperties;
 
 /**
  *  Interface for the part of Mutation++ responsible for modeling Gas-Surface
@@ -178,6 +179,12 @@ public:
      * @param mdot on return mass blowing flux kg/(m^2-s)
      */
     void getMassBlowingRate(double& mdot);
+
+    /**
+     * Function used mainly for testing which returns a constant reference
+     * to the SurfaceProperties class.
+     */
+    const SurfaceProperties& getSurfaceProperties();
 
 private:
     /**

@@ -75,12 +75,12 @@ public:
     	m_thermo.setState(
     	    v_rhoi.data(), v_Twall.data(), set_state_with_rhoi_T);
     	double m_sp_thermal_speed = m_transport.speciesThermalSpeed(
-                                        mv_react[idx_react]);
+            mv_react[idx_react]);
 
-        return  m_sp_thermal_speed/4.
-                * m_pre_exp * std::exp(- m_activ_en/Twall)
-                / m_thermo.speciesMw(
-                mv_react[idx_react])*v_rhoi(mv_react[idx_react]);
+        return
+            m_sp_thermal_speed/4. * m_pre_exp * std::exp(- m_activ_en/Twall)
+            / m_thermo.speciesMw(mv_react[idx_react])*v_rhoi(
+                mv_react[idx_react]);
     }
 
 private:

@@ -54,10 +54,7 @@ public:
             "formula", m_formula,
             errorNoFormulainReaction());
 
-        parseFormula(
-            args.s_thermo,
-            args.s_surf_state,
-            *(args.s_iter_reaction));
+        parseFormula(args.s_thermo, *(args.s_iter_reaction));
 
         const Mutation::Utilities::IO::XmlElement& node_rate_law =
             *(args.s_iter_reaction->begin());
@@ -65,6 +62,7 @@ public:
         DataGSIRateLaw data_gsi_rate_law = {
             args.s_thermo,
             args.s_transport,
+            m_surf_props,
             node_rate_law,
             m_reactants,
             m_products };
@@ -91,8 +89,7 @@ public:
         for (int ir = 0; ir < m_reactants_surf.size(); ++ir){
             for (int kr = 0; kr < ne; ++kr) {
                 v_sums[kr] += args.s_thermo.elementMatrix()(
-                    args.s_surf_state.surfaceProps().surfaceToGasIndex(
-                        m_reactants_surf[ir]), kr);
+                    m_surf_props.surfaceToGasIndex(m_reactants_surf[ir]), kr);
             }
         }
         // Products
@@ -104,8 +101,7 @@ public:
         for (int ip = 0; ip < m_products_surf.size(); ++ip){
             for (int kp = 0; kp < ne; ++kp) {
                 v_sums[kp] -= args.s_thermo.elementMatrix()(
-                    args.s_surf_state.surfaceProps().surfaceToGasIndex(
-                        m_products_surf[ip]), kp);
+                    m_surf_props.surfaceToGasIndex(m_products_surf[ip]), kp);
             }
         }
 
@@ -130,8 +126,7 @@ public:
         std::vector<int>& species, std::vector<int>& species_surf,
         std::string& str_chem_species,
         const Mutation::Utilities::IO::XmlElement& node_reaction,
-        const Mutation::Thermodynamics::Thermodynamics& thermo,
-        const SurfaceState& surf_state){
+        const Mutation::Thermodynamics::Thermodynamics& thermo){
 
         // State-Machine states for parsing a species formula
         enum ParseState {
@@ -185,9 +180,8 @@ public:
                             str_chem_species.substr(s, e-s+1));
 
                 if (index == -1) {
-                    index =
-                        surf_state.surfaceProps().surfaceSpeciesIndex(
-                            str_chem_species.substr(s, e-s+1));
+                    index = m_surf_props.surfaceSpeciesIndex(
+                        str_chem_species.substr(s, e-s+1));
                 }
 
                 if(index == -1) {

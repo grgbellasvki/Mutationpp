@@ -27,9 +27,12 @@ add_sources(mutation++
     GasSurfaceInteraction.cpp
     GSIReactionAblation.cpp
     GSIReactionCatalysis.cpp
+    GSIReactionDetailed.cpp
+    GSIRateLawAdsorption.cpp
     GSIRateLawGammaConst.cpp
     GSIRateLawGammaT.cpp
     GSIRateLawSublimation.cpp
+    GSIRateManagerDetailed.cpp
     GSIRateManagerPhenomenological.cpp
     GSIStoichiometryManager.cpp
     MassBlowingRateAblation.cpp
@@ -42,6 +45,7 @@ add_sources(mutation++
     SurfaceBalanceSolverMassEnergy.cpp
     SurfacePropertiesNull.cpp
     SurfacePropertiesAblation.cpp
+    SurfacePropertiesDetailed.cpp
     SurfaceState.cpp
 )
 

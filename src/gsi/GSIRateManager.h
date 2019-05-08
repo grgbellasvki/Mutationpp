@@ -75,9 +75,9 @@ public:
      * of type DataGSIRateManager.
      */
     GSIRateManager(ARGS args)
-       : m_thermo(args.s_thermo ),
-         m_surf_state(args.s_surf_state ),
-         v_reactions(args.s_reactions ) { }
+       : m_thermo(args.s_thermo),
+         m_surf_state(args.s_surf_state),
+         v_reactions(args.s_reactions) { }
 
 //==============================================================================
 

@@ -90,7 +90,7 @@ public:
     /**
      * Returns the gas phase species associated with the surface species.
      */
-    virtual int surfaceToGasIndex(const int& i_surf_species) const {
+    virtual int surfaceToGasIndex(const int& i_surf_sp) const {
         return -1;
     }
 
@@ -99,6 +99,25 @@ public:
      * Returns the number of surface species.
      */
     virtual size_t nSurfaceSpecies() const { return 0; }
+
+//==============================================================================
+    /**
+     * Returns to which site category the species belong.
+     */
+    virtual int siteSpeciesToSiteCategoryIndex(const int& i_site_sp) const {
+        return -1;
+    }
+
+//==============================================================================
+    /**
+     * Returns the number of species in Sites.
+     */
+    virtual size_t nSiteSpecies() const { return 0; }
+//==============================================================================
+    /**
+     * Returns the number of site categories.
+     */
+    virtual size_t nSiteCategories() const { return 0; }
 
 //==============================================================================
 

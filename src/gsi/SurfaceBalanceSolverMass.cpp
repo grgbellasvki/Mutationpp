@@ -334,5 +334,9 @@ ObjectProvider<
     SurfaceBalanceSolverMass, Surface>
     surface_balance_solver_phenomenological_mass("phenomenological_mass");
 
+ObjectProvider<
+    SurfaceBalanceSolverMass, Surface>
+    surface_balance_solver_detailed_mass("detailed_mass");
+
     } // namespace GasSurfaceInteraction
 } // namespace Mutation
