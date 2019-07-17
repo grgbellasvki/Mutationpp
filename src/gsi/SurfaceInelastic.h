@@ -62,7 +62,8 @@ public:
     /**
      *  Function which returns the inelastic term.
      */
-    double surfaceInelasticTerm(const Eigen::VectorXd& v_X, const Eigen::VectorXd& v_h,  const Eigen::VectorXd& chem_souce);
+    double surfaceInelasticTerm(const Eigen::VectorXd& v_X, const Eigen::VectorXd& v_h,  const Eigen::VectorXd& chem_souce,
+        const Eigen::VectorXd& v_rhoi);
 
 //==============================================================================
 

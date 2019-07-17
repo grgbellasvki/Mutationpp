@@ -61,46 +61,54 @@ SurfaceInelastic::~SurfaceInelastic(){}
 
 //==============================================================================
 
-double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorXd& v_h, const VectorXd& chem_souce)
+double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorXd& v_h, const VectorXd& chem_souce, const VectorXd& v_rhoi)
 {
 
     //computing Vibrational traslational exchange
     double T_tra = v_X(pos_E);
     double T_vib = v_X(pos_E + 1);
+    double inleastic_term = 0.;
+    double thermal_speed;
+    double num_dens_i;
+    double one_over_tau;
+    double h_VE;
+    double h_VV_per_particle;
+
     Eigen::VectorXd h_tra(m_ns);
     Eigen::VectorXd h_vib(m_ns);
     Eigen::VectorXd h_el(m_ns);
-    m_thermo.speciesHOverRT(T_tra, T_tra, T_tra, T_tra, T_tra, NULL, h_tra.data(), NULL, h_vib.data(), h_el.data(), NULL);	
+
+    const int set_state_with_rhoi_T = 1;
+    m_thermo.setState(
+        v_rhoi.data(), v_X.tail(2).data(), set_state_with_rhoi_T);
     double number_density = m_thermo.numberDensity();
-    double inleastic_term = 0.;
-    double tol = 1.E-19;
-    if (m_eff_coll > tol) {
-	double thermal_speed;
-        for(int i = 0; i < m_ns; ++i) {
-	    //thermal speed of species i
-	    //if (i < m_thermo.hasElectrons()) thermal_speed = sqrt(RU*T_vib/(2.*PI*m_speciesMw(i)));
-	    //else thermal_speed = sqrt(RU*T_tra/(2.*PI*m_speciesMw(i))); 
-	    if (i < m_thermo.hasElectrons()) thermal_speed = sqrt(T_vib)*m_therm_vel_over_T(i);
-	    else thermal_speed = sqrt(T_tra)*m_therm_vel_over_T(i); 
 
-	    //number denisty species
-	    double num_dens_i = v_X(i)*number_density;
+    m_thermo.speciesHOverRT(T_tra, T_tra, T_tra, T_tra, T_tra, NULL, h_tra.data(), NULL, h_vib.data(), h_el.data(), NULL);
+    for(int i = 0; i < m_ns; ++i) {
 
-	    //characteristc time ^-1
-	    double one_over_tau = num_dens_i*thermal_speed;
-	    //std::cout << "one_over_tau is" << one_over_tau << std::endl;
+	//thermal speed of species i [m/s]
+	if (i < m_thermo.hasElectrons()) thermal_speed = sqrt(T_vib)*m_therm_vel_over_T(i);
+	else thermal_speed = sqrt(T_tra)*m_therm_vel_over_T(i);
 
-	    //vibronic enthaply at Teq
-	    double h_VE;
-	    if (i < m_thermo.hasElectrons()) h_VE = (h_tra[i]*T_tra)*RU/m_speciesMw(i);  //check it
-	    else h_VE = (h_vib(i) + h_el(i))*T_tra*RU/m_speciesMw(i);
+        //number denisty species
+	num_dens_i = v_X(i)*number_density;
 
-	    inleastic_term += m_eff_coll*(h_VE-v_h(m_ns + i))*one_over_tau;	    	
-	    }
-    }
+	//impinging particle flux [# / m^2 s ]
+	one_over_tau = num_dens_i*thermal_speed;
+
+	//vibronic enthaply at Teq of the single particles [J/ #]
+	if (i < m_thermo.hasElectrons()) h_VE = h_tra[i]*T_tra*RU / NA;
+	else h_VE = (h_vib(i) + h_el(i))*T_tra*RU / NA;
+
+        //from mass entalphy to element enthalphy [J/ #]
+        h_VV_per_particle =  v_h(m_ns + i) * m_speciesMw(i) / NA;
+
+	// [  J / m^2 s ]
+	inleastic_term += m_eff_coll*(h_VE - h_VV_per_particle)*one_over_tau;
+	}
 
     //Compute vibrational chemical production  
-    if (1.-m_beta > tol) inleastic_term += (1-m_beta)*v_h(m_index)*chem_souce(m_index);
+    inleastic_term -= (1.-m_beta)*v_h(m_index)*chem_souce(m_index);
 
     return inleastic_term;
 }

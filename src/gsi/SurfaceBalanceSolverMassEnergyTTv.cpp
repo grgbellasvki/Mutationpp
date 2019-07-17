@@ -122,7 +122,7 @@ public:
 
         // Setup NewtonSolver
         setMaxIterations(10);
-        setWriteConvergenceHistory(true);
+        setWriteConvergenceHistory(false);
         setEpsilon(m_tol);
     }
 
@@ -241,7 +241,7 @@ public:
 
     void updateFunction(Eigen::VectorXd& v_X)
     {
-        applyTolerance(mv_X);
+        applyTolerance(v_X);
         // Comment: (+) If flux enters the volume.
         // Assuming the normal vector of the surface to be pointing from the
         // solid to the gas phase.
@@ -271,10 +271,9 @@ public:
             mv_surf_reac_rates);
         mv_f.head(m_ns) += mv_rhoi*mass_blow/mv_rhoi.sum();
 
-        // Energy
+        // Total Energy
         m_thermo.getEnthalpiesMass(mv_hi.data());
-        //double hmix = m_thermo.mixtureHMass();
-	double hmix = mv_rhoi.dot(mv_hi.head(m_ns))/mv_rhoi.sum();
+        double hmix = m_thermo.mixtureHMass();
 
         mv_f(pos_E) +=
            mv_hi.head(m_ns).dot(mv_Vdiff.cwiseProduct(mv_rhoi));
@@ -286,7 +285,7 @@ public:
         if (mp_surf_rad != NULL)
             mv_f(pos_E) -= mp_surf_rad->surfaceNetRadiativeHeatFlux();
 
-	//vibronic entalphy of the mixture
+	// Vibronic Energy
 	double hVMix = 	mv_rhoi.dot(mv_hi.tail(m_ns))/mv_rhoi.sum();
 
 	mv_f(pos_E+1) += mass_blow*hVMix;
@@ -294,8 +293,8 @@ public:
             mp_gas_heat_flux_calc->computeGasFourierVibrationalHeatFlux(v_X.tail(m_nT));
 	mv_f(pos_E+1) += 
             mv_hi.tail(m_ns).dot(mv_Vdiff.cwiseProduct(mv_rhoi));
-	mv_f(pos_E+1) -= 
-            mp_surf_inelastic->surfaceInelasticTerm(v_X, mv_hi, mv_surf_reac_rates);
+	mv_f(pos_E+1) +=
+            mp_surf_inelastic->surfaceInelasticTerm(v_X, mv_hi, mv_surf_reac_rates, mv_rhoi);
     }
 
 //==============================================================================
