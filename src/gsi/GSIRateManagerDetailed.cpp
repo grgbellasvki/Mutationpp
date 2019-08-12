@@ -27,6 +27,7 @@
  */
 
 
+#include "NewtonSolver.h"
 #include "Thermodynamics.h"
 #include "Transport.h"
 
@@ -39,6 +40,7 @@
 
 using namespace Eigen;
 
+using namespace Mutation::Numerics;
 using namespace Mutation::Utilities::Config;
 
 namespace Mutation {
@@ -46,7 +48,9 @@ namespace Mutation {
 
 //=============================================================================
 
-class GSIRateManagerDetailed : public GSIRateManager
+class GSIRateManagerDetailed :
+    public GSIRateManager,
+    public NewtonSolver<VectorXd, GSIRateManagerDetailed>
 {
 public:
     GSIRateManagerDetailed(DataGSIRateManager args)
@@ -54,7 +58,8 @@ public:
 		  m_ns(args.s_thermo.nSpecies()),
 		  m_nr(args.s_reactions.size()),
           mv_react_rate_const(m_nr),
-		  mv_work(m_ns)
+		  mv_work(m_ns),
+          is_surf_steady_state(true)
     {
         for (int i_reac = 0; i_reac < m_nr; ++i_reac) {
             m_reactants.addReaction(
@@ -62,6 +67,11 @@ public:
             m_irr_products.addReaction(
                 i_reac, args.s_reactions[i_reac]->getProducts());
         }
+
+        // Setup NewtonSolver
+        setMaxIterations(5);
+        setWriteConvergenceHistory(false);
+        setEpsilon(1.e-13);
     }
 
 //=============================================================================
@@ -81,6 +91,13 @@ public:
                         m_surf_state.getSurfaceT());
         }
 
+        if (is_surf_steady_state)
+            computeSurfaceSteadyStateCoverage();
+
+        // Getting all number densities
+        // mv_nd.head(m_ns) = 0.;
+        // mv_nd.tail(m_site_sp) = 0.;
+
         // Constant rate times densities of species
         mv_work.setZero();
         m_reactants.incrSpecies(mv_react_rate_const, mv_work);
@@ -88,12 +105,41 @@ public:
 
         // Multiply by molar mass
         return mv_work.cwiseProduct(m_thermo.speciesMw().matrix());
+
+
+
+        /* lv_numb_dens.setZero();
+
+    	// Getting the initial number densities
+    	m_wall_state.getNdStateGasSurf(lv_numb_dens); // @todo return the value
+
+    	// Getting the kfs with the initial conditions
+        for (int i_reac = 0; i_reac < m_nr; ++i_reac) {
+            v_kf(i_reac) =  v_reactions[i_reac]->
+            		            getRateLaw()->forwardReactionRateCoefficient(
+            		                m_wall_state.getWallRhoi(), m_wall_state.getWallT());
+        }
+
+        // Solving for the steady state for the Surface Species!
+        computeSurfSpeciesBalance();
+
+        v_RateofProduction = v_kf;
+        m_reactants.multReactions(lv_numb_dens, v_RateofProduction);
+
+        lv_numb_dens.setZero();
+        m_reactants.decrSpecies(v_RateofProduction, lv_numb_dens);
+        m_irr_products.incrSpecies(v_RateofProduction, lv_numb_dens);
+
+        // Multiply by molar mass
+        return (     -     lv_numb_dens.cwiseProduct(     // HERE IS THE FAMOUS "-" THAT I ONLY USE TO CONFUSE MYSELF AND A. TURCHI
+        		Eigen::Map<const Eigen::VectorXd>(m_thermo.speciesMw(), m_ns_gas))/Mutation::NA).head(m_ns_gas); */
     }
 
 //=============================================================================
 
     Eigen::VectorXd computeRatesPerReaction()
     {
+        // IMPLIMENT ME!
     	// Getting the kfs with the initial conditions
         for (int i_r = 0; i_r < m_nr; ++i_r) {
             mv_react_rate_const(i_r) =
@@ -113,8 +159,34 @@ public:
 
 //=============================================================================
 private:
+    void computeSteadyStateCoverage(){
+
+        // Initial coverage
+        mv_X = 0.; // Surface Coverage
+        mv_X = solve(mv_X);
+
+        // Setting up the SurfaceSiteCoverage.
+        // This is not essential for efficiency.
+        m_surf_state.setSurfaceSiteCoverageFrac(mv_X);
+    }
+//=============================================================================
+
+    void updateFunction(VectorXd& v_X){}
+//=============================================================================
+
+    void updateJacobian(VectorXd& v_X){}
+//=============================================================================
+
+    VectorXd& systemSolution(){}
+//=============================================================================
+
+    double norm(){}
+//=============================================================================
+private:
     const size_t m_ns;
     const size_t m_nr;
+
+    bool is_surf_steady_state;
 
     Eigen::VectorXd mv_react_rate_const;
     Eigen::VectorXd mv_work;

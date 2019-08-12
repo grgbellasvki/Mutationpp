@@ -22,8 +22,8 @@
 #include "mutation++.h"
 #include "Configuration.h"
 #include "TestMacros.h"
-#include <catch/catch.hpp>
-#include <eigen3/Eigen/Dense>
+#include <catch.hpp>
+#include <Eigen/Dense>
 
 #include "SurfaceProperties.h"
 
@@ -31,16 +31,12 @@ using namespace Mutation;
 using namespace Catch;
 using namespace Eigen;
 
-TEST_CASE
-(
-    "Detailed surface chemictry tests.",
-    "[gsi]"
-)
+TEST_CASE("Detailed surface chemictry tests.","[gsi]")
 {
     const double tol = std::numeric_limits<double>::epsilon();
     Mutation::GlobalOptions::workingDirectory(TEST_DATA_FOLDER);
 
-/*    SECTION("Surface Species and Coverage.")
+    SECTION("Surface Species and Coverage.")
     {
         // Setting up M++
         MixtureOptions opts("smb_detailed_coverage_NASA9_ChemNonEq1T");
@@ -116,7 +112,12 @@ TEST_CASE
         CHECK(mix.getSurfaceProperties().siteSpeciesToSiteCategoryIndex(
             mix.getSurfaceProperties().surfaceSpeciesIndex("b")) == -1);
 
-    } */
+        CHECK(mix.getSurfaceProperties().nSiteDensityInCategory(0) == 3.e19);
+        CHECK(mix.getSurfaceProperties().nSiteDensityInCategory(1) == 7.e19);
+        CHECK(mix.getSurfaceProperties().nSiteDensityInCategory(2) == 1.e20);
+        CHECK(mix.getSurfaceProperties().nSiteDensityInCategory(3) == -1);
+
+    }
 
     SECTION("Adsorption-Desorption Equilibrium.")
     {
@@ -124,18 +125,61 @@ TEST_CASE
         MixtureOptions opts("smb_ads_des_eq_NASA9_ChemNonEq1T");
         Mixture mix(opts);
 
-//        CHECK(mix.nSpecies() == 7);
+        size_t ns = 4;
+        size_t nr = 2;
+        CHECK(mix.nSpecies() == ns);
+        CHECK(mix.nSurfaceReactions() == 2);
 
-        // Check global options
-//        CHECK(mix.nSurfaceReactions() == 2);
+        const size_t iO = 0;
+
+        ArrayXd wdot(ns); ArrayXd wdotmpp(ns);
+        ArrayXd rates(nr); ArrayXd ratesmpp(nr);
+        wdot.setZero(); wdotmpp.setZero();
+
+        ArrayXd mm = mix.speciesMw();
 
         // Gas conditions
+        double P = 100000.;
 
         // Equilibrium Surface
-        // Tl = 300; // K
-        // for (int i = 0; i < 30; i++) {
-        //     double T = Tl + i * dT
-        // }
+        double T = 300.; // K
+        double dT = 100.; // K
+        for (int i = 0; i < 30; i++) {
+            T += i * dT;
+
+            mix.equilibrate(T, P);
+            double nO = mix.X()[iO] * mix.numberDensity();
+
+            mix.surfaceReactionRatesPerReaction(ratesmpp.data());
+
+            const double B = 1.e-5 * NA;
+            double kf1 = sqrt(RU * T / (2 * PI * mm(iO)));
+            double kf2 = 2 * PI * mm(iO) * KB * KB / (B * HP * HP * HP);
+            kf2 *= exp(-100000./T);
+
+            // Changing the surface coverage
+            const double a = 1.e-1;
+            double s = B;
+
+            for (int j = 0; j < 4; j++){
+                s *= a;
+                double Os = B - s;
+
+                rates(0) = kf1 * nO * s;
+                rates(1) = kf2 * Os;
+
+                wdot(iO) = mm(iO) / NA *(-rates(0)+rates(1)); // O
+            }
+
+            // Equilibrium surface coverage
+            s = B * kf2 / (nO * kf1 + kf2);
+            double Os = B - s;
+
+            rates(0) = kf1 * nO * s;
+            rates(1) = kf2 * Os;
+
+            wdot(0) = mm(0) / NA *(-rates(0)+rates(1)); // O
+        }
 
     }
 

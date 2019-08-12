@@ -1,9 +1,8 @@
 /**
  * @file GSIRateLawGammaT.cpp
  *
- * @brief  Class which computes the reaction rate constant for a surface
- *        reaction constant according to a gamma type model with gamma
- *        as an exponential function of temperature.
+ * @brief Class which computes the reaction rate constant for a desorption
+ *        surface reaction based on simple transition state theory.
  */
 
 /*
@@ -35,68 +34,72 @@
 #include "Utilities.h"
 
 #include "GSIRateLaw.h"
+#include "SurfaceProperties.h"
 
-using namespace std;
 using namespace Mutation::Utilities::Config;
 
 namespace Mutation {
     namespace GasSurfaceInteraction {
 
-class GSIRateLawGammaT : public GSIRateLaw
+class GSIRateLawDesorptionTST : public GSIRateLaw
 {
 public:
-    GSIRateLawGammaT(ARGS args)
+    GSIRateLawDesorptionTST(ARGS args)
         : GSIRateLaw(args),
+          m_surf_props(args.s_surf_props),
           mv_react(args.s_reactants),
           pos_T_trans(0),
           idx_react(0)
     {
-        assert(args.s_node_rate_law.tag() == "gamma_T");
+        assert(args.s_node_rate_law.tag() == "desorption_tst");
 
-        args.s_node_rate_law.getAttribute( "pre_exp", m_pre_exp,
-            "The pre-exponential coefficient for the reaction "
-            "should be provided with gamma as a function of temperature.");
-        args.s_node_rate_law.getAttribute( "T", m_T_act,
-            "The activation energy for the reaction "
-            "should be provided with gamma as a function of temperature.");
+        args.s_node_rate_law.getAttribute("T", m_T_des,
+            "Activation temperature should be provided for every desorption "
+            "reaction.");
+
+        m_mass_des = m_thermo.speciesMw(
+            args.s_surf_props.surfaceToGasIndex(mv_react[idx_react])) / NA;
+        m_site_categ = m_surf_props.siteSpeciesToSiteCategoryIndex(
+            mv_react[idx_react]);
+        m_n_sites = m_surf_props.nSiteDensityInCategory(m_site_categ);
+        // m_n_sites = args.s_surf_props.nSiteDensity();
     }
 
 //==============================================================================
 
-    ~GSIRateLawGammaT( ){ }
+    ~GSIRateLawDesorptionTST( ){ }
 
 //==============================================================================
 
     double forwardReactionRateCoefficient(
         const Eigen::VectorXd& v_rhoi, const Eigen::VectorXd& v_Tsurf) const
     {
-    	double Tsurf = v_Tsurf(pos_T_trans);
+    	const double Tsurf = v_Tsurf(pos_T_trans);
 
-    	const int set_state_with_rhoi_T = 1;
-    	m_thermo.setState(
-    	    v_rhoi.data(), v_Tsurf.data(), set_state_with_rhoi_T);
-    	double m_sp_thermal_speed = m_transport.speciesThermalSpeed(
-            mv_react[idx_react]);
+    	const double pre_exp = 2 * PI * m_mass_des * KB * KB * Tsurf * Tsurf
+            / (HP * HP * HP * m_n_sites);
 
-        return
-            m_sp_thermal_speed/4. * m_pre_exp * exp(- m_T_act/Tsurf)
-            / m_thermo.speciesMw(mv_react[idx_react])*v_rhoi(
-                mv_react[idx_react]);
+        return pre_exp * exp(-m_T_des / Tsurf);
     }
 
 private:
-    const size_t pos_T_trans;
     const size_t idx_react;
+    int m_site_categ;
 
-    double m_pre_exp;
-    double m_T_act;
+    double m_T_des;
+
+    double m_n_sites;
+    double m_mass_des;
+
+    const double pos_T_trans;
 
     const std::vector<int>& mv_react;
+    const SurfaceProperties& m_surf_props;
 };
 
 ObjectProvider<
-    GSIRateLawGammaT, GSIRateLaw>
-    gsi_rate_law_gamma_T("gamma_T");
+    GSIRateLawDesorptionTST, GSIRateLaw>
+    gsi_rate_law_desorption_tst("desorption_tst");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

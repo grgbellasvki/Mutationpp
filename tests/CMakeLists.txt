@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 2.6)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 configure_file(Configuration.h.in Configuration.h)
 
-add_executable(run_tests 
+add_executable(run_tests
     run_tests.cpp
     test_collision_integrals.cpp
     test_comparisons.cpp

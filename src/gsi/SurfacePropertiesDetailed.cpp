@@ -36,6 +36,8 @@
 
 using namespace std;
 
+using namespace Eigen;
+
 using namespace Mutation::Utilities::Config;
 using namespace Mutation::Utilities::IO;
 
@@ -89,14 +91,14 @@ public:
                     "A label should be provided.");
 
                 double sigma; // Number density of sites per m2
-                iter_phase->getAttribute("sigma", sigma,
+                iter_phase->getAttribute("sites_per_m2", sigma,
                     "Error in sites option for the surface properties. "
-                    "The number of sites (sigma) should be provided.");
-                v_sigma.push_back(sigma);
+                    "The number of sites per m2 should be provided.");
+                mv_sigma.push_back(sigma);
 
                 // Inserting empty site
-                v_site_sp.push_back(label);
-                v_site_sp_to_gas_idx.push_back(-2);
+                mv_site_sp.push_back(label);
+                mv_site_sp_to_gas_idx.push_back(-2);
 
                 // Parsing species in site
                 std::string species;
@@ -113,18 +115,28 @@ public:
                 << "properties.";
             }
 
-            n_site_categ = v_sp_in_site.size();
+            n_site_categ = mv_sp_in_site.size();
 
-            n_surf_comp_sp = v_surf_sp.size();
-            n_site_sp = v_site_sp.size();
+            n_surf_comp_sp = mv_surf_sp.size();
+            n_site_sp = mv_site_sp.size();
             n_tot_surf_sp = n_surf_comp_sp + n_site_sp;
         }
 
-        for (int i = 0; i < n_site_categ; i++)
-            for (int j = 0; j < v_sp_in_site[i]; j++)
-                v_site_sp_to_site_cat.push_back(i);
+        // Initializing surface composition
+        mv_site_cov_frac.resize(n_site_sp);
+        int p = 0;
+        for (int i = 0; i < n_site_categ; i++) {
+            int nsp = mv_sp_in_site[i];
+            for (int j = p; j < p+nsp; j++)
+                mv_site_cov_frac(j) = 1. / nsp;
+            p += nsp;
+        }
 
-        if (!is_surface_set && n_site_categ == 0 ){
+        for (int i = 0; i < n_site_categ; i++)
+            for (int j = 0; j < mv_sp_in_site[i]; j++)
+                mv_site_sp_to_site_cat.push_back(i);
+
+        if (!is_surface_set && n_site_categ == 0) {
             throw InvalidInputError("SurfaceProperties", xml_surf_props.tag())
             << "In the surface properties at least one type of surface or sites"
             << "should be provided.";
@@ -149,12 +161,12 @@ public:
     int surfaceSpeciesIndex(const std::string& str_sp) const {
         // Looping over sites
         for (int i = 0; i < n_site_sp; i++) {
-            if (v_site_sp[i] == str_sp)
+            if (mv_site_sp[i] == str_sp)
                 return n_gas_sp + i;
         }
         // Looping over surface composition
         for (int i = 0; i < n_surf_comp_sp; i++) {
-            if (v_surf_sp[i] == str_sp)
+            if (mv_surf_sp[i] == str_sp)
                 return n_gas_sp + n_site_sp + i;
         }
         // Not found
@@ -170,9 +182,9 @@ public:
         if(i_surf_sp > n_gas_sp + n_tot_surf_sp) return -1;
 
         if (i_surf_sp > n_gas_sp + n_site_sp - 1) {
-            return v_surf_to_gas_idx[i_surf_sp - (n_gas_sp + n_site_sp)];}
+            return mv_surf_to_gas_idx[i_surf_sp - (n_gas_sp + n_site_sp)];}
         else if (i_surf_sp > n_gas_sp - 1)
-            return v_site_sp_to_gas_idx[i_surf_sp - n_gas_sp];
+            return mv_site_sp_to_gas_idx[i_surf_sp - n_gas_sp];
         else
             return i_surf_sp;
     }
@@ -188,13 +200,11 @@ public:
      * Returns to which site category the site species belong.
      */
     int siteSpeciesToSiteCategoryIndex(const int& i_site_sp) const {
-        std::cout << "Site Species = " << i_site_sp << std::endl;
+
         if (i_site_sp > n_gas_sp - 1 &&
-            i_site_sp < n_gas_sp + n_tot_surf_sp - 1){
-            std::cout << "position in vector = " << i_site_sp - n_gas_sp << std::endl;
-            std::cout << "Returning = " << v_site_sp_to_site_cat[i_site_sp - n_gas_sp] << std::endl;
-            return v_site_sp_to_site_cat[i_site_sp - n_gas_sp];
-        }
+            i_site_sp < n_gas_sp + n_site_sp)
+            return mv_site_sp_to_site_cat[i_site_sp - n_gas_sp];
+
         return -1;
     }
 
@@ -211,6 +221,26 @@ public:
     size_t nSiteCategories() const { return n_site_categ; }
 
 //==============================================================================
+    double nSiteDensityInCategory(const int& i_site_c) const {
+        if (i_site_c < n_site_categ)
+            return mv_sigma[i_site_c];
+        return -1.;
+    }
+
+//==============================================================================
+
+    void setSurfaceSiteCoverageFrac(ArrayXd v_site_cov_frac) {
+        mv_site_cov_frac = v_site_cov_frac;
+/*          Normalize to one */
+    }
+
+//==============================================================================
+    ArrayXd getSurfaceSiteCoverageFrac() {
+        return mv_site_cov_frac;
+    }
+
+//==============================================================================
+
 private:
     void parseAblationSpecies(
         const std::string& species,
@@ -233,8 +263,8 @@ private:
                     "a species of the gas mixture!";
             }
 
-            v_surf_to_gas_idx.push_back(id_sp);
-            v_surf_sp.push_back(v_species[i_sp] + '-' + label);
+            mv_surf_to_gas_idx.push_back(id_sp);
+            mv_surf_sp.push_back(v_species[i_sp] + '-' + label);
         }
     }
 
@@ -261,12 +291,12 @@ private:
                 "a species of the gas mixture!";
             }
 
-            v_site_sp_to_gas_idx.push_back(id_sp);
-            v_site_sp.push_back(v_species[i_sp] + '-' + label);
+            mv_site_sp_to_gas_idx.push_back(id_sp);
+            mv_site_sp.push_back(v_species[i_sp] + '-' + label);
         }
         size_t const empty_site = 1;
         size_t tot_sp_in_site = empty_site + non_empty;
-        v_sp_in_site.push_back(tot_sp_in_site);
+        mv_sp_in_site.push_back(tot_sp_in_site);
     }
 
 private:
@@ -277,19 +307,19 @@ private:
 
 //  Info about the sites
     int n_site_categ;
-    vector<int> v_sp_in_site; // Number of different species in each site
-    vector<double> v_sigma; // Surface site number density per m2
+    vector<int> mv_sp_in_site; // Number of different species in each site
+    vector<double> mv_sigma; // Surface site number density per m2
     int n_site_sp;
-    vector<std::string> v_site_sp; // Contains all species chemical symbol
-    vector<int> v_site_sp_to_gas_idx; // Maps sites to gas idx
-    vector<int> v_site_sp_to_site_cat; // Maps sites to site category
-
+    vector<std::string> mv_site_sp; // Contains all species chemical symbol
+    vector<int> mv_site_sp_to_gas_idx; // Maps sites to gas idx
+    vector<int> mv_site_sp_to_site_cat; // Maps sites to site category
+    ArrayXd mv_site_cov_frac; // Number density of free and occupied sites per m2
 
 //  Info about the surface composition
     bool is_surface_set;
     int n_surf_comp_sp;
-    std::vector<std::string> v_surf_sp;
-    std::vector<int> v_surf_to_gas_idx;
+    std::vector<std::string> mv_surf_sp;
+    std::vector<int> mv_surf_to_gas_idx;
 
     int n_tot_surf_sp;
 };

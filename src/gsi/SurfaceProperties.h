@@ -113,12 +113,35 @@ public:
      * Returns the number of species in Sites.
      */
     virtual size_t nSiteSpecies() const { return 0; }
+
 //==============================================================================
     /**
      * Returns the number of site categories.
      */
     virtual size_t nSiteCategories() const { return 0; }
 
+//==============================================================================
+    /**
+     * Returns the site surface density in a site category.
+     */
+    virtual double nSiteDensityInCategory(const int& i_site_c) const {
+        return -1.;
+    }
+//==============================================================================
+    virtual void setSurfaceSiteCoverageFrac(Eigen::ArrayXd v_site_cov_frac){
+        throw LogicError()
+        << "setSurfaceSiteCoverageFrac can be called only "
+        << "when detailed surface reactions are considered!";
+    }
+
+//==============================================================================
+    virtual Eigen::ArrayXd getSurfaceSiteCoverageFrac() {
+        throw LogicError()
+        << "getSurfaceSiteCoverageFrac can be called only "
+        << "when detailed surface reactions are considered!";
+    }
+
+//==============================================================================
 //==============================================================================
 
 };

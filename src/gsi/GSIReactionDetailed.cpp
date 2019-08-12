@@ -91,12 +91,11 @@ public:
                     v_sums[kr] += args.s_thermo.elementMatrix()(reactant, kr);
                 } else {
                     int gas = m_surf_props.surfaceToGasIndex(reactant);
-                    if (gas > 0)
+                    if (gas > -1)
                         v_sums[kr] += args.s_thermo.elementMatrix()(gas, kr);
                 }
             }
             int site = m_surf_props.siteSpeciesToSiteCategoryIndex(reactant);
-            std::cout << "Site Reactant = " << site << std::endl;
             if (site != -1) v_sums_site[site] += 1;
         }
         // Reactants in the surface phase
@@ -112,14 +111,14 @@ public:
                     v_sums[kp] -= args.s_thermo.elementMatrix()(product, kp);
                 } else {
                     int gas = m_surf_props.surfaceToGasIndex(product);
-                    if (gas > 0)
+                    if (gas > -1)
                         v_sums[kp] -= args.s_thermo.elementMatrix()(gas, kp);
                 }
             }
             int site = m_surf_props.siteSpeciesToSiteCategoryIndex(product);
-            std::cout << "Product = " << product << " site = " <<  site << std::endl;
             if (site != -1) v_sums_site[site] -= 1;
         }
+
         // Products in the surface phase
         for (int ip = 0; ip < m_products_surf.size(); ++ip){
             for (int kp = 0; kp < ne; ++kp) {
@@ -136,7 +135,7 @@ public:
          if (m_conserves == false)
                 throw InvalidInputError("formula", m_formula)
                     << "Reaction " << m_formula
-                    << " does not conserve charge or mass.";
+                    << " does not conserve mass or sites.";
     }
 
 //==============================================================================

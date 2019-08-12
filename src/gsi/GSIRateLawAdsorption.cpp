@@ -34,6 +34,7 @@
 #include "Utilities.h"
 
 #include "GSIRateLaw.h"
+#include "SurfaceProperties.h"
 
 using namespace Mutation::Utilities::Config;
 
@@ -48,11 +49,12 @@ public:
           m_surf_props(args.s_surf_props),
           mv_react(args.s_reactants),
           pos_T_trans(0),
-          idx_react(0)
+          idx_react(0),
+          idx_site(1)
     {
         assert(args.s_node_rate_law.tag() == "adsorption");
 
-        const double huge_number = 1.e20;
+        const double huge_number = 1.e30;
         const double zero = 0.0;
 
         args.s_node_rate_law.getAttribute( "stick_coef", m_stick_coef,
@@ -67,6 +69,11 @@ public:
 
         const int n_stick_sp = 1;
         m_stick_coef_power = mv_react.size() - n_stick_sp;
+
+        m_site_categ = m_surf_props.siteSpeciesToSiteCategoryIndex(
+            mv_react[idx_site]);
+        m_n_sites = pow(m_surf_props.nSiteDensityInCategory(
+            m_site_categ), m_stick_coef_power);
     }
 
 //==============================================================================
@@ -78,29 +85,29 @@ public:
     double forwardReactionRateCoefficient(
         const Eigen::VectorXd& v_rhoi, const Eigen::VectorXd& v_Tsurf) const
     {
-/*    	double T_surf = v_Tsurf(pos_T_trans);
+    	const double Tsurf = v_Tsurf(pos_T_trans);
 
     	const int set_state_with_rhoi_T = 1;
-        m_thermo.setState(v_rhoi.data(), v_Twall.data(), set_state_with_rhoi_T);
-        double thermal_speed =
+        m_thermo.setState(v_rhoi.data(), v_Tsurf.data(), set_state_with_rhoi_T);
+        const double thermal_speed =
             m_transport.speciesThermalSpeed(mv_react[idx_react]);
 
         //  Sticking coefficient temperature correction
-        double S_coef_T_corr = m_S_coeff;
-        if (T_surf > m_T_thresh)
-        	S_coef_T_corr *= exp(-m_beta_T_corr * (T_surf - m_T_thresh));
+        double stic_coef_corr = m_stick_coef;
+        if (Tsurf > m_T_thresh)
+        	stic_coef_corr *= exp(-m_beta_T_corr * (Tsurf - m_T_thresh));
 
-        double B = pow(
-            m_surf_props.nSitesInCategory(site_categ), m_stick_coef_power);
-
-       return S_coef_T_corr * thermal_speed / (4 * B) * exp(-m_T_act / T_surf)); */
-       return 0.;
+       return stic_coef_corr * thermal_speed /
+            (4 * m_n_sites) * exp(-m_T_act / Tsurf);
     }
 
 private:
     const size_t pos_T_trans;
     const size_t idx_react;
+    const size_t idx_site;
+    int m_site_categ;
 
+    double m_n_sites;
     double m_stick_coef;
     double m_T_act;
 

@@ -1,18 +1,18 @@
 <gsi gsi_mechanism = "detailed_mass">
 
     <surface_properties type = "detailed">
-        <site label = "s" sigma = "6.0221e18" species = "O" />
+        <site label = "s" sites_per_m2 = "1.e20" species = "O" />
     </surface_properties>
 
     <surface_chemistry>
-        <!-- Chemisorption of O Atoms -->
+        <!-- Adsorption of O Atoms -->
         <reaction type="detailed" formula="O + s => O-s">
             <adsorption stick_coef = "1."  T = "0." />
         </reaction>
 
         <!-- Thermal Desorption of O Atoms -->
         <reaction type="detailed" formula="O-s => O + s">
-            <desorption_oxidation E_desorption = "3.6814e+05"/>
+            <desorption_tst T = "1.e+05"/>
         </reaction>
     </surface_chemistry>
 </gsi>
