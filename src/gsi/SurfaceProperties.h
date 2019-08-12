@@ -128,14 +128,15 @@ public:
         return -1.;
     }
 //==============================================================================
-    virtual void setSurfaceSiteCoverageFrac(Eigen::ArrayXd v_site_cov_frac){
+    virtual void setSurfaceSiteCoverageFrac(
+        const Eigen::ArrayXd& v_site_cov_frac) {
         throw LogicError()
         << "setSurfaceSiteCoverageFrac can be called only "
         << "when detailed surface reactions are considered!";
     }
 
 //==============================================================================
-    virtual Eigen::ArrayXd getSurfaceSiteCoverageFrac() {
+    virtual Eigen::ArrayXd getSurfaceSiteCoverageFrac() const {
         throw LogicError()
         << "getSurfaceSiteCoverageFrac can be called only "
         << "when detailed surface reactions are considered!";

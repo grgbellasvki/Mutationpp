@@ -55,6 +55,7 @@ class GSIRateManagerDetailed :
 public:
     GSIRateManagerDetailed(DataGSIRateManager args)
         : GSIRateManager(args),
+          m_surf_props(args.s_surf_state.getSurfaceProperties()),
 		  m_ns(args.s_thermo.nSpecies()),
 		  m_nr(args.s_reactions.size()),
           mv_react_rate_const(m_nr),
@@ -105,8 +106,6 @@ public:
 
         // Multiply by molar mass
         return mv_work.cwiseProduct(m_thermo.speciesMw().matrix());
-
-
 
         /* lv_numb_dens.setZero();
 
@@ -159,15 +158,15 @@ public:
 
 //=============================================================================
 private:
-    void computeSteadyStateCoverage(){
+    void computeSurfaceSteadyStateCoverage(){
 
         // Initial coverage
-        mv_X = 0.; // Surface Coverage
-        mv_X = solve(mv_X);
+        mv_X = m_surf_props.getSurfaceSiteCoverageFrac(); // Surface Coverage
+        // mv_X = solve(mv_X);
 
         // Setting up the SurfaceSiteCoverage.
         // This is not essential for efficiency.
-        m_surf_state.setSurfaceSiteCoverageFrac(mv_X);
+        m_surf_props.setSurfaceSiteCoverageFrac(mv_X);
     }
 //=============================================================================
 
@@ -180,16 +179,22 @@ private:
     VectorXd& systemSolution(){}
 //=============================================================================
 
-    double norm(){}
+    double norm(){return 0.;}
 //=============================================================================
 private:
+    SurfaceProperties& m_surf_props;
+
     const size_t m_ns;
     const size_t m_nr;
 
     bool is_surf_steady_state;
 
-    Eigen::VectorXd mv_react_rate_const;
-    Eigen::VectorXd mv_work;
+    VectorXd mv_react_rate_const;
+    VectorXd mv_work;
+
+    // For the steady state coverage solver.
+    VectorXd mv_X;
+    VectorXd mv_dX;
 
     GSIStoichiometryManager m_reactants;
     GSIStoichiometryManager m_irr_products;

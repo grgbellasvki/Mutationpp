@@ -229,13 +229,13 @@ public:
 
 //==============================================================================
 
-    void setSurfaceSiteCoverageFrac(ArrayXd v_site_cov_frac) {
+    void setSurfaceSiteCoverageFrac(const ArrayXd& v_site_cov_frac) {
         mv_site_cov_frac = v_site_cov_frac;
-/*          Normalize to one */
+        // Normalize to one
     }
 
 //==============================================================================
-    ArrayXd getSurfaceSiteCoverageFrac() {
+    ArrayXd getSurfaceSiteCoverageFrac() const {
         return mv_site_cov_frac;
     }
 

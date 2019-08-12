@@ -125,7 +125,7 @@ public:
     /**
      * Returns a constant reference to the surface properties class.
      */
-    const SurfaceProperties& getSurfaceProperties() const {
+    SurfaceProperties& getSurfaceProperties() const {
          return *mp_surf_props;
     }
 
@@ -138,7 +138,7 @@ public:
 
 private:
     const Mutation::Thermodynamics::Thermodynamics& m_thermo;
-    const SurfaceProperties* mp_surf_props;
+    SurfaceProperties* mp_surf_props;
     const SolidProperties* mp_solid_props;
 
     const size_t m_ns;
