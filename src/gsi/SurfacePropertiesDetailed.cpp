@@ -59,6 +59,9 @@ public:
     {
         assert(xml_surf_props.tag() == "surface_properties");
 
+        xml_surf_props.getAttribute(
+            "steady_coverage", is_surf_cov_steady, true);
+
         // For all bulk compositions
         for (XmlElement::const_iterator iter_phase =
                 xml_surf_props.begin();
@@ -221,6 +224,14 @@ public:
     size_t nSiteCategories() const { return n_site_categ; }
 
 //==============================================================================
+    /**
+     * Returns the number of species in the input site category.
+     */
+    size_t nSpeciesInSiteCategory(const int& i_site_c) const {
+        return mv_sp_in_site[i_site_c];
+    }
+
+//==============================================================================
     double nSiteDensityInCategory(const int& i_site_c) const {
         if (i_site_c < n_site_categ)
             return mv_sigma[i_site_c];
@@ -235,9 +246,17 @@ public:
     }
 
 //==============================================================================
-    ArrayXd getSurfaceSiteCoverageFrac() const {
+    ArrayXd getSurfaceSiteCoverageFrac() const { // This should be no frac
         return mv_site_cov_frac;
     }
+
+//==============================================================================
+    void setIsSurfaceCoverageSteady(const bool& surf_cov_steady) {
+        is_surf_cov_steady = surf_cov_steady;
+    }
+
+//==============================================================================
+    bool isSurfaceCoverageSteady() const { return is_surf_cov_steady; }
 
 //==============================================================================
 
@@ -322,6 +341,8 @@ private:
     std::vector<int> mv_surf_to_gas_idx;
 
     int n_tot_surf_sp;
+
+    bool is_surf_cov_steady;
 };
 
 ObjectProvider<

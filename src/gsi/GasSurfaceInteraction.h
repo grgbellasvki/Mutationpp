@@ -181,10 +181,11 @@ public:
     void getMassBlowingRate(double& mdot);
 
     /**
-     * Function used mainly for testing which returns a constant reference
-     * to the SurfaceProperties class.
+     * Advanced function used mainly for testing which returns a reference
+     * to the SurfaceProperties class. It should be used also when detailed surface
+     * models are considered, without assuming steady surface coverage.
      */
-    const SurfaceProperties& getSurfaceProperties();
+    SurfaceProperties& getSurfaceProperties();
 
 private:
     /**

@@ -93,11 +93,11 @@ public:
             m_transport.speciesThermalSpeed(mv_react[idx_react]);
 
         //  Sticking coefficient temperature correction
-        double stic_coef_corr = m_stick_coef;
+        double stick_coef_corr = m_stick_coef;
         if (Tsurf > m_T_thresh)
-        	stic_coef_corr *= exp(-m_beta_T_corr * (Tsurf - m_T_thresh));
+        	stick_coef_corr *= exp(-m_beta_T_corr * (Tsurf - m_T_thresh));
 
-       return stic_coef_corr * thermal_speed /
+        return stick_coef_corr * thermal_speed /
             (4 * m_n_sites) * exp(-m_T_act / Tsurf);
     }
 

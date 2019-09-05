@@ -1,0 +1,34 @@
+<gsi gsi_mechanism = "detailed_mass">
+
+    <surface_properties type = "detailed" steady_coverage = "true">
+        <site label = "s" sites_per_m2 = "1.e20" species = "O" />
+        <surface label="b" species="C" />
+    </surface_properties>
+
+    <surface_chemistry>
+        <!-- Adsorption of O Atoms -->
+        <reaction type="detailed" formula="O + s => O-s">
+            <adsorption stick_coef = "1."  T = "0." />
+        </reaction>
+
+        <!-- Thermal Desorption of O Atoms -->
+        <reaction type="detailed" formula="O-s => O + s">
+            <desorption_tst T = "1.e+05"/>
+        </reaction>
+
+        <!-- CO production -->
+        <reaction type="detailed" formula="O + O-s + C-b => CO + O-s">
+            <LH T = "1.e+05"/>
+        </reaction>
+
+        <!-- CO production -->
+        <reaction type="detailed" formula="O-s => O + s">
+            <desorption_tst T = "1.e+05"/>
+        </reaction>
+
+        <!-- CO2 production -->
+        <reaction type="detailed" formula="O-s => O + s">
+            <desorption_tst T = "1.e+05"/>
+        </reaction>
+    </surface_chemistry>
+</gsi>

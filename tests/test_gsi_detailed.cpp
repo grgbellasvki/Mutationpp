@@ -33,7 +33,9 @@ using namespace Eigen;
 
 TEST_CASE("Detailed surface chemictry tests.","[gsi]")
 {
-    const double tol = std::numeric_limits<double>::epsilon();
+    const double tol = 100. * std::numeric_limits<double>::epsilon();
+    const double tol_det = 1.e6 * std::numeric_limits<double>::epsilon();
+
     Mutation::GlobalOptions::workingDirectory(TEST_DATA_FOLDER);
 
     SECTION("Surface Species and Coverage.")
@@ -131,54 +133,105 @@ TEST_CASE("Detailed surface chemictry tests.","[gsi]")
         CHECK(mix.nSurfaceReactions() == 2);
 
         const size_t iO = 0;
+        const int set_state_rhoi_T = 1;
 
+        ArrayXd v_rhoi(ns);
         ArrayXd wdot(ns); ArrayXd wdotmpp(ns);
         ArrayXd rates(nr); ArrayXd ratesmpp(nr);
         wdot.setZero(); wdotmpp.setZero();
 
         ArrayXd mm = mix.speciesMw();
 
-        // Gas conditions
-        double P = 100000.;
+        CHECK(mix.getSurfaceProperties().isSurfaceCoverageSteady() == false);
+        ArrayXd v_surf_cov_frac(mix.getSurfaceProperties().nSurfaceSpecies());
+        ArrayXd v_surf_cov_ss_frac(mix.getSurfaceProperties().nSurfaceSpecies());
 
         // Equilibrium Surface
-        double T = 300.; // K
-        double dT = 100.; // K
-        for (int i = 0; i < 30; i++) {
-            T += i * dT;
+        double P = 1000.;
+        double T; // K
+        double dT = 500.; // K
+        for (int i = 12; i < 30; i++) { // 30
+            T = (i+1) * dT; // += i*dT;
 
             mix.equilibrate(T, P);
+            mix.densities(v_rhoi.data());
+
+            mix.setSurfaceState(v_rhoi.data(), &T, set_state_rhoi_T);
             double nO = mix.X()[iO] * mix.numberDensity();
 
-            mix.surfaceReactionRatesPerReaction(ratesmpp.data());
-
-            const double B = 1.e-5 * NA;
+            const double B = 1.e20;
             double kf1 = sqrt(RU * T / (2 * PI * mm(iO)));
-            double kf2 = 2 * PI * mm(iO) * KB * KB / (B * HP * HP * HP);
+            double kf2 = 2 * PI * mm(iO) / NA * KB * KB * T * T / (HP * HP * HP);
             kf2 *= exp(-100000./T);
 
             // Changing the surface coverage
+            mix.getSurfaceProperties().setIsSurfaceCoverageSteady(false);
+            v_surf_cov_frac(0) = 1.;
             const double a = 1.e-1;
-            double s = B;
 
-            for (int j = 0; j < 4; j++){
-                s *= a;
-                double Os = B - s;
+            for (int j = 0; j < 0; j++){
+                v_surf_cov_frac(0) *= a;                      // s
+                v_surf_cov_frac(1) = 1. - v_surf_cov_frac(0); // Os
 
-                rates(0) = kf1 * nO * s;
-                rates(1) = kf2 * Os;
+                mix.getSurfaceProperties().setSurfaceSiteCoverageFrac(v_surf_cov_frac);
+                mix.surfaceReactionRatesPerReaction(ratesmpp.data());
 
-                wdot(iO) = mm(iO) / NA *(-rates(0)+rates(1)); // O
+                rates(0) = kf1 * nO * v_surf_cov_frac(0);
+                rates(1) = kf2 * v_surf_cov_frac(1);
+                CHECK(rates(0) == Approx(ratesmpp(0)).epsilon(tol));
+                CHECK(rates(1) == Approx(ratesmpp(1)).epsilon(tol));
+
+                wdot(iO) = mm(iO) / NA * (rates(0)-rates(1)); // From the surface point of view
+                mix.surfaceReactionRates(wdotmpp.data());
+
+                CHECK(wdot(0) == Approx(wdotmpp(0)).epsilon(tol));
+                CHECK(wdot(1) == Approx(wdotmpp(1)).epsilon(tol));
+                CHECK(wdot(2) == Approx(wdotmpp(2)).epsilon(tol));
+                CHECK(wdot(3) == Approx(wdotmpp(3)).epsilon(tol));
             }
 
             // Equilibrium surface coverage
-            s = B * kf2 / (nO * kf1 + kf2);
-            double Os = B - s;
+            mix.getSurfaceProperties().setIsSurfaceCoverageSteady(true);
+            mix.surfaceReactionRatesPerReaction(ratesmpp.data());
+            mix.surfaceReactionRates(wdotmpp.data());
 
-            rates(0) = kf1 * nO * s;
-            rates(1) = kf2 * Os;
+            v_surf_cov_ss_frac = mix.getSurfaceProperties().getSurfaceSiteCoverageFrac();
 
-            wdot(0) = mm(0) / NA *(-rates(0)+rates(1)); // O
+            // THIS IS WRONG!
+            v_surf_cov_frac(0) = kf2 / (nO * kf1 + kf2);
+            // double asdf = 1.e0 - v_surf_cov_ss_frac(0);
+            v_surf_cov_frac(1) = 1.e0 - v_surf_cov_frac(0);
+
+            // CHECK(v_surf_cov_ss_frac(0) == Approx(v_surf_cov_frac(0)).epsilon(tol));
+            // CHECK(v_surf_cov_ss_frac(1) == Approx(v_surf_cov_frac(1)).epsilon(tol));
+            // std::cout << "i = " << i << std::endl;
+            // std::cout << "    kf1 = " << kf1 << " kf2 = " << kf2 << std::endl;
+            // std::cout << "HERE 1 = " << v_surf_cov_frac(0) << " HERE 2 = " << v_surf_cov_ss_frac(1) << std::endl;
+            // std::cout << "Sum = " << v_surf_cov_frac(0) + v_surf_cov_ss_frac(1) << std::endl;
+            // std::cout << "MPP  1 = " << v_surf_cov_ss_frac(0) << " MPP  2 = " << v_surf_cov_ss_frac(1) << std::endl;
+            // std::cout << "Sum = " << v_surf_cov_ss_frac(0) + v_surf_cov_ss_frac(1) << std::endl;
+
+
+            rates(0) = kf1 * nO * v_surf_cov_frac(0);
+            rates(1) = kf2 * v_surf_cov_frac(1);
+            // CHECK(rates(0) == Approx(ratesmpp(0)).epsilon(tol_det));
+            CHECK(rates(1) == Approx(ratesmpp(1)).epsilon(tol_det));
+
+            // std::cout << "is zero here= " << rates(0) << " " << rates(1)<< std::endl;
+            // std::cout << "is zero mpp = " << ratesmpp(0) << " " << ratesmpp(1)<< std::endl;
+
+            wdot(iO) = mm(iO) / NA * (rates(0)-rates(1)); // O
+            //CHECK(wdot(0) == Approx(wdotmpp(0)).epsilon(tol));
+            //CHECK(wdot(1) == Approx(wdotmpp(1)).epsilon(tol));
+            //CHECK(wdot(2) == Approx(wdotmpp(2)).epsilon(tol));
+            //CHECK(wdot(3) == Approx(wdotmpp(3)).epsilon(tol));
+
+            // std::cout << "MPP = " << wdot(0) << " " << wdotmpp(0) << std::endl;
+            // std::cout << "MPP = " << wdot(1) << " " << wdotmpp(1) << std::endl;
+            // std::cout << "MPP = " << wdot(2) << " " << wdotmpp(2) << std::endl;
+            // std::cout << "MPP = " << wdot(3) << " " << wdotmpp(3) << std::endl;
+            // double in; std::cin >> in;
+
         }
 
     }

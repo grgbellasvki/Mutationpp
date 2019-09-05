@@ -122,6 +122,14 @@ public:
 
 //==============================================================================
     /**
+     *
+     */
+    virtual size_t nSpeciesInSiteCategory(const int& i_site_c) const {
+        return -1;
+    }
+
+//==============================================================================
+    /**
      * Returns the site surface density in a site category.
      */
     virtual double nSiteDensityInCategory(const int& i_site_c) const {
@@ -143,6 +151,18 @@ public:
     }
 
 //==============================================================================
+    virtual void setIsSurfaceCoverageSteady(const bool& surf_cov_steady) {
+        throw LogicError()
+        << "setSurfaceCoverageSteady can be called only "
+        << "when detailed surface reactions are considered!";
+    }
+
+//==============================================================================
+    virtual bool isSurfaceCoverageSteady() const {
+        throw LogicError()
+        << "isSurfaceCoverageSteady can be called only "
+        << "when detailed surface reactions are considered!";
+    }
 //==============================================================================
 
 };

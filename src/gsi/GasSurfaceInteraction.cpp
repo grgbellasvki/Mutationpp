@@ -217,7 +217,7 @@ void GasSurfaceInteraction::getMassBlowingRate(double& mdot){
 
 //==============================================================================
 
-const SurfaceProperties& GasSurfaceInteraction::getSurfaceProperties(){
+SurfaceProperties& GasSurfaceInteraction::getSurfaceProperties(){
     return mp_surf_state->getSurfaceProperties();
 }
 

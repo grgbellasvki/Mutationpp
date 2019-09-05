@@ -1,6 +1,6 @@
 <gsi gsi_mechanism = "detailed_mass">
 
-    <surface_properties type = "detailed">
+    <surface_properties type = "detailed" steady_coverage = "false">
         <site label = "s" sites_per_m2 = "1.e20" species = "O" />
     </surface_properties>
 
