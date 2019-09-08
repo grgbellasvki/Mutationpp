@@ -69,7 +69,7 @@ public:
           mv_rhoi(m_ns),
           mv_nd(m_ns+mn_site_sp),
           is_surf_steady_state(true),
-          m_tol(1.e-25),
+          m_tol(1.e-30),
           m_pert(1.e-2),
           mv_X(mn_site_sp),
           mv_dX(mn_site_sp),
@@ -92,7 +92,7 @@ public:
 
         // Setup NewtonSolver
         setMaxIterations(5);
-        setWriteConvergenceHistory(false);
+        setWriteConvergenceHistory(true);
         setEpsilon(m_tol);
     }
 
@@ -171,7 +171,7 @@ public:
             computeSurfaceSteadyStateCoverage();
 
         double B = mv_sigma(0);
-        cout << scientific << setprecision(100);
+        // cout << scientific << setprecision(100);
         // std::cout << "mpp kf1 = " << mv_kf(0)*B << " kf2 = " << mv_kf(1)*B << std::endl;
 
         mv_rate = mv_kf;

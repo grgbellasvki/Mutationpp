@@ -13,22 +13,22 @@
 
         <!-- Thermal Desorption of O Atoms -->
         <reaction type="detailed" formula="O-s => O + s">
-            <desorption_tst T = "1.e+05"/>
+            <desorption_tst T = "4.427745"/>
         </reaction>
 
         <!-- CO production -->
         <reaction type="detailed" formula="O + O-s + C-b => CO + O-s">
-            <LH T = "1.e+05"/>
+            <ER_arrhenius pre_exp = "57.37" T = "4.667e3"/>
         </reaction>
 
         <!-- CO production -->
-        <reaction type="detailed" formula="O-s => O + s">
-            <desorption_tst T = "1.e+05"/>
+        <reaction type="detailed" formula="O + O-s + C-b => CO2 + s">
+            <ER_arrhenius  pre_exp = "8.529e-6" T = "-6.958e3"/>
         </reaction>
 
         <!-- CO2 production -->
-        <reaction type="detailed" formula="O-s => O + s">
-            <desorption_tst T = "1.e+05"/>
+        <reaction type="detailed" formula="O + s + C-b => CO + s">
+            <ER_arrhenius  pre_exp = "0.1203" T = "-2.287e3"/>
         </reaction>
     </surface_chemistry>
 </gsi>

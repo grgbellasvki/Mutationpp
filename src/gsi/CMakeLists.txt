@@ -32,6 +32,7 @@ add_sources(mutation++
     GSIRateLawDesorptionTST.cpp
     GSIRateLawGammaConst.cpp
     GSIRateLawGammaT.cpp
+    GSIRateLawERArrhenius.cpp
     GSIRateLawSublimation.cpp
     GSIRateManagerDetailed.cpp
     GSIRateManagerPhenomenological.cpp
