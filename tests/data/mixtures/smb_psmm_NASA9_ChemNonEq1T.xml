@@ -1,10 +1,10 @@
 <mixture mechanism="none"
          thermo_db="NASA-9"
          state_model="ChemNonEq1T"
-         gsi_mechanism="smb_ads_des_eq">
+         gsi_mechanism="smb_psmm">
 
     <species>
-        O O2 C CO
+        O O2 C CO CO2
     </species>
 
     <element_compositions default="default">

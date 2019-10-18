@@ -69,8 +69,8 @@ public:
           mv_rhoi(m_ns),
           mv_nd(m_ns+mn_site_sp),
           is_surf_steady_state(true),
-          m_tol(1.e-30),
-          m_pert(1.e-2),
+          m_tol(1.e-15),
+          m_pert(1.e-1),
           mv_X(mn_site_sp),
           mv_dX(mn_site_sp),
           mv_f_unpert(m_ns+mn_site_sp),
@@ -170,12 +170,13 @@ public:
         if (is_surf_cov_steady_state)
             computeSurfaceSteadyStateCoverage();
 
-        double B = mv_sigma(0);
+        // double B = mv_sigma(0);
         // cout << scientific << setprecision(100);
         // std::cout << "mpp kf1 = " << mv_kf(0)*B << " kf2 = " << mv_kf(1)*B << std::endl;
 
         mv_rate = mv_kf;
         m_reactants.multReactions(mv_nd, mv_rate);
+
 
         return mv_rate;
     }
@@ -267,6 +268,7 @@ private:
 
         // std::cout << "Before X = \n" << mv_X << std::endl;
         mv_X = solve(mv_X);
+
         applyTolerance(mv_X);
         // std::cout << "After X = \n" << mv_X << std::endl;
 
@@ -278,8 +280,8 @@ private:
 
 //=============================================================================
     inline void applyTolerance(Eigen::VectorXd& v_x) const {
-        for (int i = 0; i < mn_site_sp; i++)
-            if (std::abs(v_x(i)) < m_tol) v_x(i) = m_tol;
+        for (int i = 0; i < v_x.size(); i++)
+            if (std::abs(v_x(i) / mv_sigma(0)) < m_tol) v_x(i) = 0.;
     }
 
 //=============================================================================
