@@ -48,6 +48,7 @@ SurfaceInelastic::SurfaceInelastic(
            pos_E(thermo.nSpecies()),
 	   m_ns(thermo.nSpecies()),
 	   m_speciesMw(thermo.speciesMw()),
+	   m_index(m_thermo.speciesIndex("CN")),
 	   m_therm_vel_over_T(sqrt(RU/(2.*PI*(thermo.speciesMw()))))
 {
     xml_surf_inelastic.getAttribute("effective_collisions", m_eff_coll, 1.);
@@ -60,13 +61,14 @@ SurfaceInelastic::~SurfaceInelastic(){}
 
 //==============================================================================
 
-double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorXd& v_h, const VectorXd& chem_souce, const VectorXd& v_rhoi)
+double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorXd& v_h, const VectorXd& chem_souce, const VectorXd& v_rhoi,
+const VectorXd& v_Vdiff)
 {
 
     //computing Vibrational traslational exchange
-    double inleastic_term = 0.;
     double T_tra = v_X(pos_E);
     double T_vib = v_X(pos_E + 1);
+    double inleastic_term = 0.;
     double thermal_speed;
     double num_dens_i;
     double one_over_tau;
@@ -93,7 +95,7 @@ double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorX
 	num_dens_i = v_X(i)*number_density;
 
 	//impinging particle flux [# / m^2 s ]
-	one_over_tau = num_dens_i*thermal_speed;
+	one_over_tau = num_dens_i*(thermal_speed + v_Vdiff(i)/2);
 
 	//vibronic enthaply at Teq of the single particles [J/ #]
 	if (i < m_thermo.hasElectrons()) h_VE = h_tra[i]*T_tra*RU / NA;
@@ -107,7 +109,7 @@ double SurfaceInelastic::surfaceInelasticTerm(const VectorXd& v_X, const VectorX
 	}
 
     //Compute vibrational chemical production  
-    inleastic_term += (1.-m_beta)*chem_souce.dot( v_h.head(m_ns) - v_h.tail(m_ns));
+    inleastic_term -= (1.-m_beta)*v_h(m_index)*chem_souce(m_index);
 
     return inleastic_term;
 }
