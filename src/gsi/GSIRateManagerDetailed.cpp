@@ -332,5 +332,8 @@ private:
 ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
     gsi_rate_manager_detailed_mass("detailed_mass");
 
+ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
+    gsi_rate_manager_detailed_mass_energy("detailed_mass_energy");
+
     } // namespace GasSurfaceInteraction
 } // namespace Mutation
