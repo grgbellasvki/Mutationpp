@@ -1,0 +1,31 @@
+<gsi gsi_mechanism = "detailed_mass">
+
+    <surface_properties type = "detailed" steady_coverage = "true">
+        <site label = "s" sites_per_m2 = "6.022e18" species = "N" />
+        <surface label="b" species="C" />
+    </surface_properties>
+
+    <surface_chemistry>
+        <!-- Adsorption of N Atoms -->
+        <reaction type="detailed" formula="N + s => N-s">
+            <adsorption stick_coef = "1."  T = "7500." />
+        </reaction>
+
+        <!-- Thermal Desorption of N Atoms -->
+        <reaction type="detailed" formula="N-s => N + s">
+            <desorption_tst2 T = "73971.6"/>
+        </reaction>
+
+        <!-- CN production -->
+        <reaction type="detailed" formula="N + N-s + C-b => CN + N + s">
+            <ER_arrhenius pre_exp = "9.0e5" T = "20676.0"/>
+        </reaction>
+
+        <!-- N2 production -->
+        <reaction type="detailed" formula="N + N-s => N2 + s">
+            <ER_arrhenius  pre_exp = "1.1e6" T = "18000"/>
+        </reaction>
+
+    </surface_chemistry>
+
+</gsi>

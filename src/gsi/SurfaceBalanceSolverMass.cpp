@@ -67,7 +67,7 @@ public:
           mv_f_unpert(m_ns),
           m_jac(m_ns, m_ns),
           m_tol(1.e-13),
-          m_pert(1.e-2),
+          m_pert(1.e-4),
           mv_X_unpert(m_ns),
           pos_T_trans(0),
           set_state_with_rhoi_T(1),
