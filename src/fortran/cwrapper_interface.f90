@@ -105,13 +105,26 @@ module mutationpp
         real(kind=8) function mpp_electron_thermal_conductivity()
         end function
 
-        real(kind=8) function mpp_internal_thermal_conductivity()
+        real(kind=8) function mpp_internal_thermal_conductivity(Tv)
+            real(kind=8), intent(in) :: Tv
         end function
 
         real(kind=8) function mpp_reactive_thermal_conductivity()
         end function
    
         real(kind=8) function mpp_sigma()
+        end function
+
+        logical function mpp_has_electrons()
+        end function
+
+        real(kind=8) function mpp_rotational_thermal_conductivity()
+        end function
+
+        real(kind=8) function mpp_vibrational_thermal_conductivity()
+        end function
+
+        real(kind=8) function mpp_electronic_thermal_conductivity()
         end function
         
     end interface

@@ -142,6 +142,12 @@ void NAME_MANGLE(species_name)(int* index, F_STRING species, F_STRLEN species_le
 }
 
 //==============================================================================
+bool NAME_MANGLE(has_electrons)()
+{
+    return p_mix->hasElectrons();
+}
+
+//==============================================================================
 double NAME_MANGLE(mixture_mw)()
 {
     return p_mix->mixtureMw();
@@ -367,15 +373,33 @@ double NAME_MANGLE(heavy_thermal_conductivity)()
 }
 
 //==============================================================================
+double NAME_MANGLE(rotational_thermal_conductivity)()
+{
+    return p_mix->rotationalThermalConductivity();
+}
+
+//==============================================================================
+double NAME_MANGLE(vibrational_thermal_conductivity)()
+{
+    return p_mix->vibrationalThermalConductivity();
+}
+
+//==============================================================================
+double NAME_MANGLE(electronic_thermal_conductivity)()
+{
+    return p_mix->electronicThermalConductivity();
+}
+
+//==============================================================================
 double NAME_MANGLE(electron_thermal_conductivity)()
 {
     return p_mix->electronThermalConductivity();
 }
 
 //==============================================================================
-double NAME_MANGLE(internal_thermal_conductivity)(double T)
+double NAME_MANGLE(internal_thermal_conductivity)(double *T)
 {
-    return p_mix->internalThermalConductivity(T);
+    return p_mix->internalThermalConductivity(*T);
 }
 
 //==============================================================================
