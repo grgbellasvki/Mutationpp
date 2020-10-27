@@ -80,20 +80,15 @@ ParticleRRHO::ParticleRRHO(const IO::XmlElement& xml_element)
             
             int    degeneracy;
             double temperature;
-
-           // int dummy = 0;
-            
+           
             for ( ; level_iter != iter->end(); ++level_iter) {
                 if (level_iter->tag() == "level") {
                     level_iter->getAttribute("degeneracy",  degeneracy);
                     level_iter->getAttribute("energy", temperature);
                     
                     // convert from 1/cm to K
-                    //if (dummy == 0) {
                     m_electronic_energies.push_back(
                         std::make_pair(degeneracy, temperature * 1.4387));
-                    //dummy = 1;
-                    //}
                 }
             }
         }
