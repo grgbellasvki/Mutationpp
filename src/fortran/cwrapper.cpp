@@ -508,3 +508,16 @@ void NAME_MANGLE(convert_ys_to_ye)(
 }
 
 //==============================================================================
+double NAME_MANGLE(mixture_s_mass)()
+{
+    return p_mix->mixtureSMass();
+}
+
+//==============================================================================
+
+double NAME_MANGLE(mixture_equilibrium_sound_speed)()
+{
+    return p_mix->equilibriumSoundSpeed();
+}
+
+//==============================================================================

@@ -506,6 +506,16 @@ void NAME_MANGLE(convert_ye_to_xe)(
 void NAME_MANGLE(convert_ys_to_ye)(
         const double* species_y, double* elements_y);
 
+/**
+* Returns the equilibrium sound speed
+*/
+double NAME_MANGLE(mixture_equilibrium_sound_speed)();
+
+/**
+* Returns the entropy per unit mass
+*/
+double NAME_MANGLE(mixture_s_mass)();
+
 #ifdef __cplusplus
 }
 #endif
