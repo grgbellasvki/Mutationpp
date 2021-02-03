@@ -34,6 +34,7 @@ add_executable(run_tests
     test_energies.cpp
     test_errors.cpp
     test_gsi_detailed.cpp
+    test_gsi_detailed_mass_energy.cpp
     test_gsi_mass.cpp
     test_gsi_mass_energy.cpp
     test_gsi_rates.cpp

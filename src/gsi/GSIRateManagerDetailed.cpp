@@ -91,8 +91,8 @@ public:
         }
 
         // Setup NewtonSolver
-        setMaxIterations(5);
-        setWriteConvergenceHistory(true);
+        setMaxIterations(50);
+        setWriteConvergenceHistory(false);
         setEpsilon(m_tol);
     }
 
@@ -264,7 +264,16 @@ private:
 
         // mv_nd.head(m_ns) = 1.;
         // mv_X = mv_nd.tail(mn_site_sp);
-        mv_X.setConstant(5.e19);
+        //mv_X.setConstant(5.e17);
+        //mv_X.setConstant(3.011e18);
+
+        //mv_X.setZero(); @TODO
+        //for (int i = 0; i < mv_sigma.size(); ++i) {
+        //    mv_X(0) +=  mv_sigma(i) / mv_sigma.size();
+        //    mv_X(element_of_site(i)) +=  mv_sigma(i) / mv_sigma.size();
+        //    }
+
+        mv_X.setConstant(mv_sigma(0) / (mv_sigma.size() + 1));
 
         // std::cout << "Before X = \n" << mv_X << std::endl;
         mv_X = solve(mv_X);
@@ -322,6 +331,9 @@ private:
 
 ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
     gsi_rate_manager_detailed_mass("detailed_mass");
+
+ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
+    gsi_rate_manager_detailed_mass_energy("detailed_mass_energy");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

@@ -2,7 +2,7 @@
 
     <!-- Electron (treated as element in mutation++) -->
     <element name="e-" charge="-1">
-        <mw units="g/mol">0.00055</mw>
+        <mw units="g/mol">0.000548579903</mw>
     </element>
     
     <!-- Aluminium -->
@@ -62,7 +62,7 @@
     
     <!-- Carbon -->
     <element name="C">
-        <mw units="g/mol">12.011</mw>
+        <mw units="g/mol">12.0107</mw>
     </element>
     
     <!-- Chlorine -->
