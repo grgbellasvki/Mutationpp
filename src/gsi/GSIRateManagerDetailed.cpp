@@ -91,7 +91,7 @@ public:
         }
 
         // Setup NewtonSolver
-        setMaxIterations(5);
+        setMaxIterations(50);
         setWriteConvergenceHistory(false);
         setEpsilon(m_tol);
     }

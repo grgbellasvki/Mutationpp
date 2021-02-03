@@ -486,4 +486,139 @@ TEST_CASE("Detailed surface chemictry tests.","[gsi]")
 
     }
 
+
+    SECTION("Nitridation Model 2.")
+    {
+        // Setting up M++
+        MixtureOptions optsFRC("smb_FRC2_nitridation_NASA9_ChemNonEq1T");
+        Mixture mixFRC(optsFRC);
+
+        size_t ns = 4;
+        size_t nr = 6;
+
+        CHECK(mixFRC.nSpecies() == ns);
+        CHECK(mixFRC.nSurfaceReactions() == nr);
+
+        const size_t iN = 0;
+        const size_t iN2 = 1;
+        const size_t iCN = 3;
+
+        const int set_state_rhoi_T = 1;
+
+        const double tol = 10e-4;
+
+        ArrayXd v_rhoi(ns);
+        ArrayXd wdot(ns); ArrayXd wdotmpp(ns);
+        ArrayXd rates(nr); ArrayXd ratesmpp(nr);
+        wdot.setZero(); wdotmpp.setZero();
+
+        ArrayXd mm = mixFRC.speciesMw();
+
+        CHECK(mixFRC.getSurfaceProperties().isSurfaceCoverageSteady() == true);
+        ArrayXd v_surf_cov_mpp_frac(mixFRC.getSurfaceProperties().nSurfaceSpecies());
+        ArrayXd v_surf_cov_frac(mixFRC.getSurfaceProperties().nSurfaceSpecies());
+
+        // Equilibrium Surface, problema a P = 1.e-5 e T = 1000.0 @TODO
+        double P = 1.e-4;
+        double dP = 10.;
+        double T; // K
+        double dT = 200.; // K
+        for (int i = 0; i < 14; i++) {
+            for (int j = 0; j < 12; j++) {
+                T = (j+6) * dT;
+                //std::cout << T <<  "   " << P << std::endl;      
+                //T = 2407.;
+                //P = 1500.;
+
+                mixFRC.equilibrate(T, P);
+                mixFRC.densities(v_rhoi.data());
+
+                mixFRC.setSurfaceState(v_rhoi.data(), &T, set_state_rhoi_T);
+                double nN = mixFRC.X()[iN] * mixFRC.numberDensity();
+
+                mixFRC.surfaceReactionRatesPerReaction(ratesmpp.data());
+                mixFRC.surfaceReactionRates(wdotmpp.data());
+
+                const double B = 6.022e18;
+                double F = 1./B * sqrt(RU * T / (2 * PI * mm(iN)));
+                double kfads = F*exp(-2500./T);
+                double kfdes = 2.0 * PI * mm(iN) / NA * KB * KB * T * T / (HP * HP * HP) / B;
+                kfdes *= exp(-73971.6/T);
+                double kfer1 = F * 1.5 * exp(-7000./T);
+                double kfer2 = F * 0.5 * exp(-2000./T);
+		//double kflh1 = 4.96155568504e-12; //sqrt(1.0/(B)) * sqrt(PI*KB*T/ (8.0 * mm(iN)))* 0.1 * exp(-21000.0/ T);
+		//double kflh1 = sqrt(NA/(B)) * sqrt(PI*KB*T/ (8.0 * mm(iN)))* 0.1 * exp(-21000.0/ T);
+		double kflh1 = sqrt(NA/(B)) * sqrt(PI*KB*T/ (2.0 * mm(iN)))* 0.1 * exp(-21000.0/ T);
+		double kflh2 = 1e8 * exp(-20676.0 / T);
+
+		//std::cout << "kflh1 is " << kflh1 << std::endl;
+
+		double A = 2.0*kflh1;
+		double BB = (kfads + kfer1 + kfer2)*nN + kfdes + kflh2;
+		double C = kfads * B * nN;
+
+                v_surf_cov_frac(1) = (sqrt(BB*BB + 4.*A*C) - BB )/ (2.0 * A);
+                v_surf_cov_frac(0) = B - v_surf_cov_frac(1);
+
+                //v_surf_cov_frac(0) = (kfdes + nN*(kfer1+kfer2))/(nN*(kfads + kfer1 + kfer2) + kfdes)*B;
+                //v_surf_cov_frac(1) = B - v_surf_cov_frac(0);
+
+                v_surf_cov_mpp_frac = mixFRC.getSurfaceProperties().getSurfaceSiteCoverageFrac();
+                v_surf_cov_mpp_frac *= B;
+
+		//std::cout << v_surf_cov_frac(0) << "   " << v_surf_cov_frac(1)<< std::endl;
+		//std::cout << v_surf_cov_mpp_frac(0) << "   " << v_surf_cov_mpp_frac(1)<< std::endl;
+
+                //Check total number of sites is respected and free spot is the same of analytical solution
+                CHECK(v_surf_cov_mpp_frac(0) >= 0.0);
+                CHECK(v_surf_cov_mpp_frac(1) >= 0.0);
+                CHECK((B - v_surf_cov_mpp_frac.sum())/B == Approx(0.0).epsilon(tol));
+                if (v_surf_cov_mpp_frac(0)/B >= 1.0e-14)
+                    CHECK((v_surf_cov_frac(0) - v_surf_cov_mpp_frac(0))/v_surf_cov_mpp_frac(0) == Approx(0.0).epsilon(tol));
+                else
+                    CHECK(v_surf_cov_frac(0)/B <= 1.0e-14);
+
+                //Check rates
+                rates(0) = kfads * nN * v_surf_cov_frac(0);
+                rates(1) = kfdes * v_surf_cov_frac(1);
+                rates(2) = kfer1 * nN * v_surf_cov_frac(1);
+                rates(3) = kfer2 * nN * v_surf_cov_frac(1);
+                rates(4) = kflh1 * v_surf_cov_frac(1)* v_surf_cov_frac(1);
+                rates(5) = kflh2 * v_surf_cov_frac(1);
+
+        	/*std::cout << "HERE" << std::endl;
+		std::cout << rates(0) << " " << ratesmpp(0) << std::endl;
+		std::cout << rates(1) << " " << ratesmpp(1) << std::endl;
+		std::cout << rates(2) << " " << ratesmpp(2) << std::endl;
+		std::cout << rates(3) << " " << ratesmpp(3) << std::endl;
+		std::cout << rates(4) << " " << ratesmpp(4) << std::endl;
+		std::cout << rates(5) << " " << ratesmpp(5) << std::endl;*/
+
+                for (int ii = 0; ii < 6; ++ii ) {
+                    if (abs(ratesmpp(ii)) >= 1.0e-14)
+                        CHECK((rates(ii) - ratesmpp(ii))/ratesmpp(ii) == Approx(0.0).epsilon(tol));
+                    else
+                        CHECK(abs(rates(ii)) <= 1.0e-14);
+                }
+
+                //Check chemical production
+                wdot(0) = - mm(iN) / NA * (-rates(0) + rates(1) - rates(3));
+                wdot(1) = - mm(iN2) / NA * (rates(3) + rates(4));
+                wdot(2) = 0.;
+                wdot(3) = -mm(iCN) / NA * (rates(2) + rates(5));
+
+                for (int ii = 0; ii < 4; ++ii ) {
+                    if (abs(wdotmpp(ii)) >= 1e-14)
+                        CHECK((wdot(ii) - wdotmpp(ii))/wdot(ii) == Approx(0.0).epsilon(tol));
+                     else
+                        CHECK(abs(wdot(ii)) <= 1.0e-14);
+                }
+
+            }
+
+            P *= dP;
+        }
+
+    }
+
 }

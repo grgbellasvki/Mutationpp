@@ -34,6 +34,8 @@ add_sources(mutation++
     GSIRateLawGammaConst.cpp
     GSIRateLawGammaT.cpp
     GSIRateLawERArrhenius.cpp
+    GSIRateLawHLArrhenius.cpp
+    GSIRateLawHLArrhenius_abla.cpp
     GSIRateLawSublimation.cpp
     GSIRateManagerDetailed.cpp
     GSIRateManagerPhenomenological.cpp
