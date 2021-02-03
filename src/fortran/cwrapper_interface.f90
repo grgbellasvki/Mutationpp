@@ -126,6 +126,12 @@ module mutationpp
 
         real(kind=8) function mpp_electronic_thermal_conductivity()
         end function
+
+        real(kind=8) function mpp_mixture_s_mass()
+        end function
+
+        real(kind=8) function mpp_mixture_equilibrium_sound_speed()
+        end function
         
     end interface
 
