@@ -79,9 +79,12 @@ public:
 	{
 		static int i_transfer_model = 0;
 		switch (i_transfer_model){
-		   case 0:
+        		   case 0:
 			  return compute_source_Candler();
-		  break;
+		      break;
+		           case 1:
+			  return compute_source_preferential();
+		      break;
 		   default:
 			  std::cerr << "The selected Chemistry-Vibration-Chemistry model is not implemented yet";
 			  return 0.0;
@@ -92,8 +95,12 @@ private:
 	int m_ns;
 	double* mp_wrk1;
 	double* mp_wrk2;
+    const int m_mol = 6;
+    const char* m_molecules[6] = { "N2", "O2", "NO", "N2+", "O2+", "NO+"};
+    const double m_energy[6] = { 9.759, 5.115, 6.496, 8.712, 6.663, 10.85};
 
 	double const compute_source_Candler();
+	double const compute_source_preferential();
 };
 
  /**
@@ -109,7 +116,6 @@ private:
 double const OmegaCV::compute_source_Candler()
 {
 
-
 	 // Getting Vibrational Energy
 	 m_mixture.speciesHOverRT(NULL, NULL, NULL, mp_wrk1, NULL, NULL);
 
@@ -124,6 +130,40 @@ double const OmegaCV::compute_source_Candler()
 		 sum += mp_wrk1[i]*mp_wrk2[i]/m_mixture.speciesMw(i);
 
 	 return(c1*sum*m_mixture.T()*RU);
+ }
+
+ /**
+ * Preferential Model according to Gnoffo with
+ *
+ * For more information:
+ *
+ * Gnoffo, Gupta, Shinn, Conservation equations and Physics modeles for Hypersonic Air Flows un Thermal and Chemical Nonequilibrium,
+ * Nasa technical report, 1989
+ *
+ */
+
+double const OmegaCV::compute_source_preferential()
+{
+
+	 // Getting Production Rate
+	 m_mixture.netProductionRates(mp_wrk2);
+
+     double DissEnergy[m_ns] = { };
+     int index;
+     for (int i=0; i < m_mol; ++i) {
+         index = m_mixture.speciesIndex(m_molecules[i]);
+         if ( index >= 0)
+             DissEnergy[index] = m_energy[i]*1000.0*96.487;
+      }
+
+	 // Inner Product
+	 double c1 = 0.3E0;
+	 double sum = 0.E0;
+
+	 for(int i = 0 ; i < m_ns; ++i)
+		 sum += c1 * mp_wrk2[i] * DissEnergy[i]/m_mixture.speciesMw(i);
+
+     return sum;
  }
 
 // Register the transfer model
