@@ -89,5 +89,24 @@ double GasFourierHeatFluxCalculator::computeGasFourierHeatFlux(
     return -mv_lambda.dot(mv_dTdx);
 }
 
+//==============================================================================
+
+double GasFourierHeatFluxCalculator::computeGasFourierVibrationalHeatFlux(
+    const VectorXd& v_T) //imporve it
+{
+    if (!m_is_cond_set) {
+    	throw LogicError()
+        << "Calling GasFourierHeatFluxCalculator::"
+        << "HeatFluxCalculator() before "
+        << "calling GasFourierHeatFluxCalculator::"
+        << "setGasFourierHeatFluxModel().";
+    }
+
+    mv_dTdx = (v_T - mv_T_edge)/m_dx;
+    m_transport.frozenThermalConductivityVector(mv_lambda.data());
+    return -mv_lambda(1)*(mv_dTdx(1));
+}
+
     } // namespace GasSurfaceInteraction
 } // namespace Mutation
+

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2014-2018 von Karman Institute for Fluid Dynamics (VKI)
+ * Copyright 2014 von Karman Institute for Fluid Dynamics (VKI)
  *
  * This file is part of MUlticomponent Thermodynamic And Transport
  * properties for IONized gases in C++ (Mutation++) software package.
@@ -39,79 +39,98 @@ class OmegaI : public TransferModel
 {
 
 public:
-    OmegaI(Mutation::Mixture& mix)
-        : TransferModel(mix)
-    {
-        m_ns = m_mixture.nSpecies();
-        m_nr = m_mixture.nReactions();
-        mp_hf = new double [m_ns];
-        mp_h = new double [m_ns];
-        mp_rate = new double [m_nr];
-        mp_delta = new double [m_nr];
-        for(int i=0; i<m_nr; ++i) {
-            if ( (mix.reactions()[i].type() == Kinetics::IONIZATION_E)
-                || (mix.reactions()[i].type() == Kinetics::DISSOCIATION_E)
-                || (mix.reactions()[i].type() == Kinetics::ELECTRONIC_DETACHMENT_E)
-                || (mix.reactions()[i].type() == Kinetics::EXCITATION_E)
-                || (mix.reactions()[i].type() == Kinetics::ION_RECOMBINATION_E)
-                || (mix.reactions()[i].type() == Kinetics::RECOMBINATION_E)
-                || (mix.reactions()[i].type() == Kinetics::ELECTRONIC_ATTACHMENT_E) )
-                m_rId.push_back(i);
+	OmegaI(Mutation::Mixture& mix)
+		: TransferModel(mix)
+	{
+
+		m_ns = m_mixture.nSpecies();
+		m_nr = m_mixture.nReactions();
+		mp_hf = new double [m_ns];
+		mp_h = new double [m_ns];
+		mp_rate = new double [m_nr];
+		mp_delta = new double [m_nr];
+		for(int i=0; i<m_nr; ++i) {
+			if ( (mix.reactions()[i].type() == Kinetics::IONIZATION_E)
+			  || (mix.reactions()[i].type() == Kinetics::DISSOCIATION_E))
+				 m_rId.push_back(std::make_pair(i,1));
+			if ( (mix.reactions()[i].type() == Kinetics::ION_RECOMBINATION_E)
+			  || (mix.reactions()[i].type() == Kinetics::RECOMBINATION_E))
+				 m_rId.push_back(std::make_pair(i,-1));
+		}
+
+        for (int i =0 ; i<m_rId.size();++i){
+            if(mix.reactions()[m_rId[i].first].reactants()[1] == mix.speciesIndex("N"))
+                m_rLowerIonziationEnergy.push_back(std::make_pair(m_rId[i].first,429360.0));
+            if(m_mixture.reactions()[m_rId[i].first].reactants()[1] == m_mixture.speciesIndex("O"))
+                m_rLowerIonziationEnergy.push_back(std::make_pair(m_rId[i].first,404852.0));
         }
-    };
+	};
 
-    ~OmegaI() {
-        delete [] mp_hf;
-        delete [] mp_h;
-        delete [] mp_rate;
-        delete [] mp_delta;
-    };
+	~OmegaI() {
+		delete [] mp_hf;
+		delete [] mp_h;
+		delete [] mp_rate;
+		delete [] mp_delta;
+	};
 
-    /**
-      * Computes the Electron-Impact reactions heat Generation in \f$ [J/(m^3\cdot s)] \f$
-      * which acts as a sink to the free electron energy equation. Considers both reactions
-      * such as electron impact ionization and dissociation
-      *
-      * \f[ \Omega^{I} = - \sum_{r \in \mathcal{R}} \Delta h_r \xi_r \f]
-      *
-      * \f[ \mathcal{R} \f] denotes the set of electron impact reactions.
-      * \f[ \Delta h_r \f] is the reaction enthalpy \f[ [J/mol] \f]
-      * \f[ \xi_r \f] is the molar rate of progress \f[ [mol/(m^3\cdot s)] \f]
-      *
-      * @todo consider the ionization energy for N and O from an already
-      * excited state as suggested by Johnston (PhD thesis)
-      */
-    double source()
-    {
-        // Get Formation enthalpy
-        m_mixture.speciesHOverRT(mp_h, NULL, NULL, NULL, NULL, mp_hf);
+	/**
+	  * Computes the Electron-Impact reactions heat Generation in \f$ [J/(m^3\cdot s)] \f$
+	  * which acts as a shrink to the free electron energy equation.
+	  *
+	  * \f[ \Omega^{I} = - \sum_{r \in \mathcal{R}} \Delta h_r \xi_r \f]
+	  *
+	  * \f[ \mathcal{R} \f] denotes the set of electron impact reactions.
+	  * \f[ \Delta h_r \f] is the reaction enthalpy \f[ [J/mol] \f]
+	  * \f[ \xi_r \f] is the molar rate of progress \f[ [mol/(m^3\cdot s)] \f]
+	  *
+	  */
+	double source()
+	{
+		// Get Formation enthalpy
+		m_mixture.speciesHOverRT(mp_h, NULL, NULL, NULL, NULL, mp_hf);
+		//for (int i = 0; i < m_ns; ++i)
+		//	mp_hf[i]*= RU*m_mixture.T();
 
-        // Get reaction enthalpies
-        std::fill(mp_delta, mp_delta+m_nr, 0.0);
-        m_mixture.getReactionDelta(mp_hf,mp_delta);
+		// Get reaction enthalpies
+		std::fill(mp_delta, mp_delta+m_nr, 0.0);
+		m_mixture.getReactionDelta(mp_hf,mp_delta);
+
+        /*for (int i =0; i < m_nr; ++i){
+            std::cout<<i+1<<" before: "<<mp_delta[i]<<std::endl;
+        }*/
+
+
+        for(int i =0 ; i<m_rLowerIonziationEnergy.size(); ++i) {
+            int j = m_rLowerIonziationEnergy[i].first;
+            mp_delta[j] = m_rLowerIonziationEnergy[i].second/(RU*m_mixture.T());
+        }
+
+      /*  for (int i =0; i < m_nr; ++i){
+            std::cout<<i+1<<" after: "<<mp_delta[i]<<std::endl;
+        }*/
 
         // Get molar rates of progress
-        m_mixture.netRatesOfProgress(mp_rate);
+		m_mixture.netRatesOfProgress(mp_rate);
 
-        double src = 0.0;
-        int j;
-        for (int i = 0; i < m_rId.size(); ++i) {
-            j = m_rId[i];
-            src += mp_delta[j]*mp_rate[j];
-        }
+		double src = 0.0;
+		int j;
+		for (int i = 0; i < m_rId.size(); ++i) {
+		    j = m_rId[i].first;
+	            src += m_rId[i].second*mp_delta[j]*mp_rate[j];
+		}
 
-        return (-src*RU*m_mixture.T());
-
-    }
+		return (-src*RU*m_mixture.T());
+	}
 
 private:
-    int m_ns;
-    int m_nr;
-    std::vector<int> m_rId;
-    double* mp_hf;
-    double* mp_h;
-    double* mp_rate;
-    double* mp_delta;
+	int m_ns;
+	int m_nr;
+    std::vector<std::pair<int, int> > m_rId;
+    std::vector<std::pair<int, double> > m_rLowerIonziationEnergy;
+	double* mp_hf;
+	double* mp_h;
+	double* mp_rate;
+	double* mp_delta;
 };
   
 // Register the transfer model

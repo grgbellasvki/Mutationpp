@@ -1,0 +1,15 @@
+<mixture mechanism="nitrogen-ions-carbon_9_olynick99_mech" 
+         thermo_db="RRHO" 
+         state_model="ChemNonEqTTv"
+         gsi_mechanism = "gsi_N2_C_ablation">
+
+    <species>
+    e- C+ C2 C3 CN C  N  N+ N2 
+    </species>
+
+    <element_compositions default="air_ion_carbon">
+        <composition name="air_ion_carbon"> N:1.0, e-:0.0 , C : 0.0 </composition>
+    </element_compositions>
+
+</mixture>
+

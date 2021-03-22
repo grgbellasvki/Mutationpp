@@ -1,0 +1,28 @@
+<gsi gsi_mechanism = "gamma_energy_TTv">
+
+    <surface_properties type = "ablation" >
+        <surface label="b" species="C"
+                 enthalpy_surface="0." />
+    </surface_properties>
+    
+    <solid_properties 
+        virgin_to_surf_density_ratio = "1."
+        enthalpy_virgin = "0."
+    />
+
+    <surface_features 
+        solid_conduction = "steady_state"
+        gas_radiation = "false"
+    />
+
+    <surface_chemistry>
+        <reaction type= "ablation" formula="C-b + N => CN">
+            <gamma_T pre_exp="0.0791" T="5653.0" />
+        </reaction>
+    </surface_chemistry>
+
+    <surface_radiation emissivity="0.86" T_env="0."/>
+
+    <surface_inelastc effective_collisions="0." accomodation_coef="1."/>
+
+</gsi>

@@ -1,0 +1,52 @@
+<!-- Nitrogen-Carbon reaction mechanism for nitrogen-carbon mixture with charged particles (subset from Olynick 1999) -->
+<mechanism name="nitrogen-ions-carbon_9_olynick99_mech">
+    
+    <arrhenius_units A="mol,cm,s,K" E="kcal,mol,K" />
+
+    <!-- 1) Olynick 1999 -->
+    <reaction formula="N2+M=2N+M">
+        <arrhenius A="7.0E+21" n="-1.6" T="113200.0" />
+        <M>C:4.28571428571, N:4.28571428571, C+:4.28571428571, N+:4.28571428571</M>
+    </reaction>
+
+     <!-- 1b) Olynick 1999 -->
+    <reaction formula="N2+e-=2N+e-">
+        <arrhenius A="1.0E+25" n="-1.6" T="113200.0" />
+    </reaction>
+   
+    <!-- 2) Olynick 1999 -->
+    <reaction formula="C2+M=C+C+M">
+        <arrhenius A="3.7E+14" n="+0.0" T="69000.0" />
+    </reaction>
+     
+    <!-- 3) Olynick 1999 -->
+    <reaction formula="CN+M=C+N+M">
+        <arrhenius A="2.5E+14" n="0.0" T="71000.0" />
+    </reaction>
+   
+    <!-- 4) Olynick 1999 -->
+    <reaction formula="C3+M=C2+C+M">
+        <arrhenius A="6.3E+16" n="-0.5" T="101200.0" />
+    </reaction>
+
+    <!-- 5) Olynick 1999 -->
+    <reaction formula="N2+C=CN+N">
+        <arrhenius A="1.1E+14" n="-0.11" T="23200.0" />
+    </reaction>
+    
+    <!-- 6) Olynick 1999 -->
+    <reaction formula="CN+C=C2+N">
+        <arrhenius A="5.0E+13" n="0.0" T="13000.0" />
+    </reaction>
+   
+     <!-- 7) Olynick 1999 -->
+    <reaction formula="N+e-=N++e-+e-">
+        <arrhenius A="5.08E+16" n="0.0" T="121000.0" />
+    </reaction>
+     
+     <!-- 8) Olynick 1999 -->
+    <reaction formula="C+e-=C++e-+e-">
+        <arrhenius A="6.35E+15" n="0.0" T="130700.0" />
+    </reaction>
+
+</mechanism>

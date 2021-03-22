@@ -54,6 +54,7 @@ struct DataSurface {
     const Mutation::Utilities::IO::XmlElement& xml_feats;
     const Mutation::Utilities::IO::XmlElement& xml_surf_chem;
     const Mutation::Utilities::IO::XmlElement& xml_surf_rad;
+    const Mutation::Utilities::IO::XmlElement& xml_surf_inelastic;
     SurfaceState& s_surf_state;
 };
 
@@ -192,6 +193,19 @@ public:
      * due to surface and bulk phase processes.
      */
     virtual double massBlowingRate() = 0;
+
+//==============================================================================
+
+    /**
+     * Purely virtual function returning the total surface
+     * inelastic term.
+     */
+    /*virtual double surfaceInelasticTerm(const Eigen::VectorXd& v_X, const Eigen::VectorXd& v_h,  const Eigen::VectorXd& chem_souce) 
+    {
+        throw LogicError()
+        << "surfaceInelasticTerm can be called only when solving "
+        << "the surface energy balance!";
+    }*/
 
 //==============================================================================
 
