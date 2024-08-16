@@ -1,0 +1,13 @@
+<mixture mechanism="none"
+         thermo_db="NASA-9"
+         state_model="ChemNonEq1T"
+         gsi_mechanism="smb_full_ACA">
+
+    <species>
+        O O2 N N2 C CO CO2 CN
+    </species>
+
+    <element_compositions default="default">
+        <composition name="default"> C:0., N:0.79, O:0.21 </composition>
+    </element_compositions>
+</mixture>

@@ -1,0 +1,111 @@
+<gsi gsi_mechanism = "detailed_mass">
+
+    <surface_properties type = "detailed" steady_coverage = "true">
+        <site label = "s" sites_per_m2 = "6.022e18" species = "N O O*" />
+        <surface label="b" species="C" />
+    </surface_properties>
+
+    <surface_chemistry>
+        <!-- Adsorption of O Atoms -->
+        <reaction type="detailed" formula="O + s => O-s">
+            <adsorption stick_coef = "0.3"  T = "0.0" />
+        </reaction>
+        
+        <!-- Thermal Desorption of O Atoms -->
+        <reaction type="detailed" formula="O-s => O + s"> 
+        	<desorption_tst T = "44277."/> 
+        </reaction>
+        
+        <!-- Gas Phase CO Production -->
+        <reaction type="detailed" formula="O + O-s + C-b => CO + O + s">
+        	<ER_arrhenius pre_exp = "100." T = "4000."/>
+        </reaction>
+    
+        <!-- Gas Phase CO2 Production -->
+        <reaction type="detailed" formula="O + O-s + C-b => CO2 + s">
+        	<ER_arrhenius pre_exp = "1." T = "500."/>
+        </reaction> 
+        
+        <!-- High Energy O Adsorption -->
+        <reaction type="detailed" formula="O + s => O*-s">
+        	<adsorption stick_coef = "0.7"  T = "0.0"/>
+        </reaction>
+        
+        <!-- High Energy O Desorption -->
+        <reaction type="detailed" formula="O*-s => O + s">
+        	<desorption_tst T = "96500."/>
+        </reaction>
+        
+        <!-- CO Production via High Energy O -->
+        <reaction type="detailed" formula="O + O*-s + C-b => CO + O + s">
+        	<ER_arrhenius pre_exp = "1000." T = "4000."/>
+        </reaction>
+        
+        <!-- O2 Production via High Energy O -->
+        <reaction type="detailed" formula="O*-s + O*-s => O2 + 2s">
+        	<LH_arrhenius pre_exp= "1.0e-3" T = "15000."/>
+        </reaction>
+        
+        <!-- O2 Production via Adsorped O -->
+        <reaction type="detailed" formula="O-s + O-s => O2 + 2s">
+        	<LH_arrhenius pre_exp = "5.e-5" T = "15000."/>
+        </reaction>
+    
+        <!-- Adsorption of N Atoms -->
+        <reaction type="detailed" formula="N + s => N-s">
+            <adsorption stick_coef = "1."  T = "2500." />
+        </reaction>
+
+        <!-- Thermal Desorption of N Atoms -->
+        <reaction type="detailed" formula="N-s => N + s">
+            <desorption_tst T = "73971.6"/>
+        </reaction>
+
+        <!-- ER CN production -->
+        <reaction type="detailed" formula="N + N-s + C-b => CN + N + s">
+            <ER_arrhenius pre_exp = "1.5" T = "7000.0"/>
+        </reaction>
+
+        <!-- ER N2 production -->
+        <reaction type="detailed" formula="N + N-s => N2 + s">
+            <ER_arrhenius  pre_exp = "0.5" T = "2000.0"/>
+        </reaction>
+
+       <!-- LH N2 production -->
+        <reaction type="detailed" formula="N-s + N-s => N2 + 2s">
+            <LH_arrhenius  pre_exp = "0.1" T = "21000.0"/>
+        </reaction>
+
+        <!-- LH CN production -->
+        <reaction type="detailed" formula="N-s + C-b => CN + s">
+            <LH_abla_arrhenius  pre_exp = "1.0e8" T = "20676.0"/>
+        </reaction>
+        
+        <!-- Adbsorbed O Production via O2 -->
+        <reaction type="detailed" formula="O2 + 2s => 2O-s">
+        	<ER_2_arrhenius pre_exp = "1." T = "8000."/>
+        </reaction>
+        
+        <!-- CO Production via O2 and O-s -->
+        <reaction type="detailed" formula="O2 + O-s + C-b => CO + O2 + s">
+        	<ER_arrhenius pre_exp = "100." T = "4000."/>
+        </reaction>
+        
+       <!-- CO2 Production via O2 and O-s -->
+       <reaction type="detailed" formula="O2 + O-s + C-b => CO2 + O + s">
+       		<ER_arrhenius pre_exp = "1." T = "500."/>
+       </reaction>
+        
+       <!-- O-s Production via O2 -->
+       <reaction type="detailed" formula="O2 + 2s => 2O*-s">
+      		<ER_2_arrhenius pre_exp = "1." T = "8000."/>
+       </reaction>
+       
+       <!-- CO Production via O2 and O* -->
+       <reaction type="detailed" formula="O2 + O*-s + C-b => CO + O2 + s">
+       		<ER_arrhenius pre_exp = "1000." T = "4000."/>
+       </reaction>
+        
+    </surface_chemistry>
+
+</gsi>

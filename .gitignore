@@ -19,3 +19,5 @@ docs/html/
 
 # OS specifics
 .DS_Store
+
+*/CMakeFiles/

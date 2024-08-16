@@ -301,7 +301,15 @@ private:
 
         const int non_empty =  v_species.size();
         for (int i_sp = 0; i_sp < non_empty; ++i_sp) {
-            int id_sp = m_thermo.speciesIndex(v_species[i_sp]);
+            string species = v_species[i_sp];
+            int id_sp = -1;
+            //identify species labelled with *, e.g. O*-s
+            if (species.back() == '*') {
+                id_sp = m_thermo.speciesIndex(species.substr(0, species.size()-1));
+            }
+            else {
+                id_sp = m_thermo.speciesIndex(v_species[i_sp]);
+            }
 
             if (id_sp == -1) {
                 throw InvalidInputError("SurfaceProperties",

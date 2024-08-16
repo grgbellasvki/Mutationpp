@@ -1,7 +1,7 @@
 /**
  * @file GSIRateLawGammaT.cpp
  *
- * @brief Class which computes the reaction rate constant for an adsorption
+ * @brief Class which computes the reaction rate constant for an ER
  *        surface reaction based on an Arrhenius formula.
  */
 

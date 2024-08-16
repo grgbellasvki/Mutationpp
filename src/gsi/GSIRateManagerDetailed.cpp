@@ -91,8 +91,8 @@ public:
         }
 
         // Setup NewtonSolver
-        setMaxIterations(5);
-        setWriteConvergenceHistory(true);
+        setMaxIterations(50);
+        setWriteConvergenceHistory(false);
         setEpsilon(m_tol);
     }
 
@@ -170,10 +170,6 @@ public:
         if (is_surf_cov_steady_state)
             computeSurfaceSteadyStateCoverage();
 
-        // double B = mv_sigma(0);
-        // cout << scientific << setprecision(100);
-        // std::cout << "mpp kf1 = " << mv_kf(0)*B << " kf2 = " << mv_kf(1)*B << std::endl;
-
         mv_rate = mv_kf;
         m_reactants.multReactions(mv_nd, mv_rate);
 
@@ -217,7 +213,7 @@ public:
         for (int i = 0; i < mn_site_sp; ++i) {
             double m_X_unpert = v_X(i);
             double pert = v_X(i) * m_pert;
-    		v_X(i) += pert;
+    	    v_X(i) += pert;
 
             // Update Jacobian column
             updateFunction(v_X);
@@ -256,21 +252,20 @@ public:
 
     double norm()
     {
-        return mv_f_unpert.lpNorm<Eigen::Infinity>();
+        //return mv_f_unpert.tail(mn_site_sp).lpNorm<Eigen::Infinity>();
+        return mv_dX.lpNorm<Eigen::Infinity>(); 
     }
 //=============================================================================
 private:
     void computeSurfaceSteadyStateCoverage(){
 
-        // mv_nd.head(m_ns) = 1.;
-        // mv_X = mv_nd.tail(mn_site_sp);
-        mv_X.setConstant(5.e19);
+        mv_X.setZero();
+        for (int i = 0; i < mn_site_cat; ++i)
+            mv_X.setConstant(mv_sigma(i) / mv_sp_in_site[i]);
 
-        // std::cout << "Before X = \n" << mv_X << std::endl;
         mv_X = solve(mv_X);
 
         applyTolerance(mv_X);
-        // std::cout << "After X = \n" << mv_X << std::endl;
 
         // Setting up the SurfaceSiteCoverage.
         // This is not essential for efficiency.
@@ -281,7 +276,8 @@ private:
 //=============================================================================
     inline void applyTolerance(Eigen::VectorXd& v_x) const {
         for (int i = 0; i < v_x.size(); i++)
-            if (std::abs(v_x(i) / mv_sigma(0)) < m_tol) v_x(i) = 0.;
+            if (std::abs(v_x(i) / mv_sigma(0)) < 1e-30) v_x(i) = 0.;
+            //if (std::abs(v_x(i) / mv_sigma(0)) < m_tol) v_x(i) = 0.; //prevent system to converge
     }
 
 //=============================================================================
@@ -322,6 +318,9 @@ private:
 
 ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
     gsi_rate_manager_detailed_mass("detailed_mass");
+
+ObjectProvider<GSIRateManagerDetailed, GSIRateManager>
+    gsi_rate_manager_detailed_mass_energy("detailed_mass_energy");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation

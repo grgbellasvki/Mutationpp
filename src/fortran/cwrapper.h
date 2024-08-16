@@ -127,6 +127,11 @@ void NAME_MANGLE(species_name)(
     int* index, F_STRING species, F_STRLEN species_length);
 
 /**
+ * Returns true if the gas has electrons.
+ */
+bool NAME_MANGLE(has_electrons)();
+
+/**
  * Returns the mixture molecular weight in kg/mol.
  */
 double NAME_MANGLE(mixture_mw)();
@@ -361,6 +366,24 @@ double NAME_MANGLE(equilibrium_thermal_conductivity)();
 double NAME_MANGLE(heavy_thermal_conductivity)();
 
 /**
+ * Returns the  rotational thermal conductivity using the 
+ * set algorithm.
+ */
+double NAME_MANGLE(rotational_thermal_conductivity)();
+
+/**
+ * Returns the vibrational thermal conductivity using the 
+ * set algorithm.
+ */
+double NAME_MANGLE(vibrational_thermal_conductivity)();
+
+/**
+ * Returns the electronic thermal conductivity using the 
+ * set algorithm.
+ */
+double NAME_MANGLE(electronic_thermal_conductivity)();
+
+/**
  * Returns the electron translational thermal conductivity.
  */
 double NAME_MANGLE(electron_thermal_conductivity)();
@@ -368,7 +391,7 @@ double NAME_MANGLE(electron_thermal_conductivity)();
 /**
  * Returns the internal energy thermal conductivity using Euken's formulas.
  */
-double NAME_MANGLE(internal_thermal_conductivity)(double T);
+double NAME_MANGLE(internal_thermal_conductivity)(double *T);
 
 /**
  * Returns the reactive thermal conductivity which accounts for reactions
@@ -482,6 +505,16 @@ void NAME_MANGLE(convert_ye_to_xe)(
 
 void NAME_MANGLE(convert_ys_to_ye)(
         const double* species_y, double* elements_y);
+
+/**
+* Returns the equilibrium sound speed
+*/
+double NAME_MANGLE(mixture_equilibrium_sound_speed)();
+
+/**
+* Returns the entropy per unit mass
+*/
+double NAME_MANGLE(mixture_s_mass)();
 
 #ifdef __cplusplus
 }

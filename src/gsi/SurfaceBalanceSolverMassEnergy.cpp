@@ -75,8 +75,8 @@ public:
           mv_f_unpert(m_neqns),
           m_jac(m_neqns, m_neqns),
           m_tol(1.e-12),
-          m_pert_m(1.e-2),
-          m_pert_T(1.e0),
+          m_pert_m(1.e-4),
+          m_pert_T(1.e-2),
           pos_E(m_ns),
           pos_T_trans(0),
           m_phi(m_surf_state.getSolidProperties().getPhiRatio()),
@@ -442,6 +442,10 @@ private:
 ObjectProvider<
     SurfaceBalanceSolverMassEnergy, Surface>
     surface_balance_solver_phenomenological_mass_energy("phenomenological_mass_energy");
+
+ObjectProvider<
+    SurfaceBalanceSolverMassEnergy, Surface>
+    surface_balance_solver_detailed_mass_energy("detailed_mass_energy");
 
     } // namespace GasSurfaceInteraction
 } // namespace Mutation
